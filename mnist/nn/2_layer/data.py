@@ -23,6 +23,7 @@ def load_training_set():
             for i in range(1, len(data)):
                 imginfo.append(int(data[i].strip()));
             imginfo = np.array(imginfo).reshape(-1, 1);
+            imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append([label, imginfo]);
             if(len(ret) % 1000 == 0):
                 print("\rloading training set: %d" % (len(ret)), end = "");
@@ -41,6 +42,7 @@ def load_testing_set():
             for i in range(0, len(data)):
                 imginfo.append(int(data[i].strip()));
             imginfo = np.array(imginfo).reshape(-1, 1);
+            imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append(imginfo);
             if(len(ret) % 1000 == 0):
                 print("\rloading testing set: %d" % (len(ret)), end = "");
@@ -80,12 +82,12 @@ def preprocess_testing_set():
 def init_model(input_size, hidden_layer_size, output_size):
     model = {};
     model['input'] = None;
-    model['w1'] = np.random.randn(hidden_layer_size, input_size);
+    model['w1'] = 0.01 * np.random.randn(hidden_layer_size, input_size);
     # model['w1'] = np.zeros(hidden_layer_size * input_size).reshape(hidden_layer_size, input_size);
     model['layer_1'] = gates.multiply_gate();
     model['h1'] = None;
     model['ReLU'] = gates.ReLU();
-    model['w2'] = np.random.randn(output_size, hidden_layer_size);
+    model['w2'] = 0.01 * np.random.randn(output_size, hidden_layer_size);
     # model['w2'] = np.zeros(output_size * hidden_layer_size).reshape(output_size, hidden_layer_size);
     model['layer_2'] = gates.multiply_gate();
     model['score'] = None;

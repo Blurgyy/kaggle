@@ -5,12 +5,13 @@ __author__ = "Blurgy";
 import os 
 import pickle 
 import random 
+import gates 
 import numpy as np 
 
 pwd = os.getcwd();
 
 def load_training_set():
-    fpath = os.path.join(pwd, "dat/train.csv");
+    fpath = os.path.join(pwd, "dat", "train.csv");
     ret = [];
     with open(fpath) as f:
         f.readline();
@@ -27,25 +28,26 @@ def load_training_set():
     return ret;
 
 def load_testing_set():
-    fpath = os.path.join(pwd, "dat/test.csv");
+    fpath = os.path.join(pwd, "dat", "test.csv");
     ret = [];
     with open(fpath) as f:
         f.readline();
-        data = line.strip.split(',');
-        imginfo = [];
-        for i in range(0, len(data)):
-            imginfo.append(int(data[i].strip()));
-        imginfo = np.array(imginfo).reshape(-1, 1);
-        ret.append(imginfo);
+        for line in f.readlines():
+            data = line.strip().split(',');
+            imginfo = [];
+            for i in range(0, len(data)):
+                imginfo.append(int(data[i].strip()));
+            imginfo = np.array(imginfo).reshape(-1, 1);
+            ret.append(imginfo);
     return ret;
 
-def preprocess_train():
-    dmp_path = "dmp/train.pickle";
+def preprocess_training_set():
+    dmp_path = os.path.join("dmp", "train.pickle");
     if(not os.path.exists("dmp")):
         os.makedirs("dmp");
     training_set = None;
     if(not os.path.exists(dmp_path)):
-        training_set = data.load_training_set();
+        training_set = load_training_set();
         with open(dmp_path, 'wb') as f:
             pickle.dump(training_set, f);
     else:
@@ -54,18 +56,51 @@ def preprocess_train():
     random.shuffle(training_set);
     return training_set;
 
+def preprocess_testing_set():
+    dmp_path = os.path.join("dmp", "test.pickle");
+    if(not os.path.exists("dmp")):
+        os.makedirs("dmp");
+    testing_set = None;
+    if(not os.path.exists(dmp_path)):
+        testing_set = load_testing_set();
+        with open(dmp_path, 'wb') as f:
+            pickle.dump(testing_set, f);
+    else:
+        with open(dmp_path, 'rb') as f:
+            testing_set = pickle.load(f);
+    # random.shuffle(testing_set);
+    return testing_set;
+
+def init_model(input_size, hidden_layer_size, output_size):
+    model = {};
+    model['input'] = None;
+    model['w1'] = np.random.randn(hidden_layer_size, input_size);
+    # model['w1'] = np.zeros(hidden_layer_size * input_size).reshape(hidden_layer_size, input_size);
+    model['layer_1'] = gates.multiply_gate();
+    model['h1'] = None;
+    model['ReLU'] = gates.ReLU();
+    model['w2'] = np.random.randn(output_size, hidden_layer_size);
+    # model['w2'] = np.zeros(output_size * hidden_layer_size).reshape(output_size, hidden_layer_size);
+    model['layer_2'] = gates.multiply_gate();
+    model['score'] = None;
+    return model;
+
 def save_model(model):
-    model_dmp_path = "dmp/model.pickle";
+    model_dmp_path = os.path.join("dmp", "model.pickle");
     if(not os.path.exists("dmp")):
         os.makedirs("dmp");
     with open(model_dmp_path, 'wb') as f:
         pickle.dump(model, f);
 
-def load_model():
-    model_dmp_path = "dmp/model.pickle";
+def load_model(ipath = None):
+    model_dmp_path = os.path.join("dmp", "model.pickle");
+    if(ipath == None):
+        pass;
+    else:
+        model_dmp_path = ipath;
     if(not os.path.exists(model_dmp_path)):
         raise ValueError("file [%s] does not exist!" % model_dmp_path);
     model = None;
     with open(model_dmp_path, 'rb') as f:
-        modle = pickle.load(f);
+        model = pickle.load(f);
     return model;

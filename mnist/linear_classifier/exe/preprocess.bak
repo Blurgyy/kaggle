@@ -1,0 +1,65 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+__author__ = "zgy";
+
+"""
+- Reads all training and testing images and dump
+- the data into a .pickle file, so as to simplify
+- the actual training process afterwards. 
+"""
+
+import os
+import sys
+import pickle
+import numpy as np 
+from PIL import Image
+
+training_img_path = "../dat/training";
+training_set_dmp_fname = "../dmp/training_set.pickle";
+testing_img_path = "../dat/testing";
+testing_set_dmp_fname = "../dmp/testing_set.pickle";
+training_img = [];
+testing_img = [];
+
+if(not os.path.exists("../dmp")):
+	os.makedirs("../dmp");
+
+force_update = False;
+if(len(sys.argv) > 1 and sys.argv[1] == "-f"):
+	force_update = True;
+
+if(force_update == True or not os.path.exists(training_set_dmp_fname)):
+	cnt = 0;
+	for root, dirs, files in os.walk(training_img_path):
+	    for file in files:
+	        if(file.split('.')[-1] == "png"):
+	            img = Image.open(root + '/' + file);
+	            arr = np.array(img);
+	            training_img.append([arr.reshape(-1, 1), int(root.split('/')[-1])]);
+	            print(training_img[-1]);
+	            input();
+	            cnt += 1;
+	            if(cnt % 1000 == 0):
+	            	print("\r%d/60000" % (cnt), end = "");
+
+	print("\rdumping training set..", end = "");
+	with open(training_set_dmp_fname, 'wb') as f:
+	    pickle.dump(training_img, f);
+	print("\rtraining set dumped at %s" % training_set_dmp_fname);
+
+if(force_update == True or not os.path.exists(testing_set_dmp_fname)):
+	cnt = 0;
+	for root, dirs, files in os.walk(testing_img_path):
+		for file in files:
+			img = Image.open(root + '/' + file);
+			arr = np.array(img);
+			testing_img.append([arr.reshape(-1, 1), int(root.split('/')[-1])]);
+			cnt += 1;
+			if(cnt % 100 == 0):
+				print("\r%d/10000" % (cnt), end = "");
+
+	print("\rdumping testing set..", end = "");
+	with open(testing_set_dmp_fname, 'wb') as f:
+		pickle.dump(testing_img, f);
+	print("\rtesting set dumped at %s" % testing_set_dmp_fname);
+

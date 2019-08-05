@@ -1,0 +1,25 @@
+# pycache
+__pycache__/
+*.pyc
+
+# images
+*.png
+
+# raw binary files
+*.*-ubyte
+
+# compressed files
+*.gz
+
+# dump files
+dmp/
+*.pickle
+*.dmp
+*.pickle.*
+
+# training log
+.training_precision.log
+
+# typescript
+typescript
+

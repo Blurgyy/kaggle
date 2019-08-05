@@ -1,0 +1,70 @@
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+__author__ = "Blurgy";
+
+import os
+import numpy as np
+import pickle
+
+training_img_path = "../dat/train.csv";
+training_set_dmp_fname = "../dmp/training_set.pickle";
+testing_img_path = "../dat/test.csv";
+testing_set_dmp_fname = "../dmp/testing_set.pickle";
+
+def dump_training_set(fname, ):
+    fn_name = "dump_training_set";
+    try:
+        ret = [];
+        with open(fname) as f:
+            f.readline();
+            lines = f.readlines();
+            for line in lines:
+                line = line.strip(" ,\n");
+                line = line.split(',');
+                elem = [];
+                for i in range(1, len(line)):
+                    elem.append(int(line[i].strip()));
+                arr = np.array(elem).reshape(-1, 1);
+                ret.append([arr, int(line[0])]);
+                # print(ret);
+                # input();
+        with open(training_set_dmp_fname, 'wb') as f:
+            pickle.dump(ret, f);
+    except Exception as e:
+        print("%s(): %s" % (fn_name, e));
+
+def dump_testing_set(fname, ):
+    fn_name = "dump_testing_set";
+    try:
+        ret = [];
+        with open(fname) as f:
+            f.readline();
+            lines = f.readlines();
+            for line in lines:
+                line = line.strip(" .\n");
+                line = line.split(',');
+                elem = [];
+                for x in line:
+                    elem.append(int(x.strip()));
+                arr = np.array(elem).reshape(-1, 1);
+                ret.append(arr);
+        with open(testing_set_dmp_fname, 'wb') as f:
+            pickle.dump(ret, f);
+    except Exception as e:
+        print("%s(): %s" % (fn_name, e));
+
+def main():
+    fn_name = "main";
+    try:
+
+        if(not os.path.exists(training_set_dmp_fname)):
+            dump_training_set(training_img_path);
+            print("training_img loaded and dumped");
+        if(not os.path.exists(testing_set_dmp_fname)):
+            dump_testing_set(testing_img_path);
+            print("testing_img loaded and dumped");
+    except Exception as e:
+        print("%s(): %s" % (fn_name, e));
+
+if(__name__ == "__main__"):
+    main();

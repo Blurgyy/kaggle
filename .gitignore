@@ -1,3 +1,9 @@
+# csv, tsv
+*.csv
+*.csv.*
+*.tsv
+*.tsv.*
+
 # pycache
 __pycache__/
 *.pyc

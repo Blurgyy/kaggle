@@ -13,6 +13,7 @@ pwd = os.getcwd();
 def load_training_set():
     fpath = os.path.join(pwd, "dat", "train.csv");
     ret = [];
+    print();
     with open(fpath) as f:
         f.readline();
         for line in f.readlines():
@@ -24,12 +25,14 @@ def load_training_set():
             imginfo = np.array(imginfo).reshape(-1, 1);
             ret.append([label, imginfo]);
             if(len(ret) % 1000 == 0):
-                print(len(ret));
+                print("\rloading training set: %d" % (len(ret)), end = "");
+    print("\ncomplete");
     return ret;
 
 def load_testing_set():
     fpath = os.path.join(pwd, "dat", "test.csv");
     ret = [];
+    print();
     with open(fpath) as f:
         f.readline();
         for line in f.readlines():
@@ -39,6 +42,9 @@ def load_testing_set():
                 imginfo.append(int(data[i].strip()));
             imginfo = np.array(imginfo).reshape(-1, 1);
             ret.append(imginfo);
+            if(len(ret) % 1000 == 0):
+                print("\rloading testing set: %d" % (len(ret)), end = "");
+    print("\ncomplete");
     return ret;
 
 def preprocess_training_set():

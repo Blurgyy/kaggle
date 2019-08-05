@@ -13,8 +13,8 @@ class ReLU(gate):
     def __init__(self, ):
         super().__init__();
     def forward(self, x, ):
-        self.mask = (x > 0);
-        self.z = x * self.mask + 0.01;
+        self.mask = (x > 0.01);
+        self.z = x * self.mask;
         # print(np.max(self.z));
         return self.z;
     def backward(self, dz):

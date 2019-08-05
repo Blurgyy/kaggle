@@ -33,15 +33,16 @@ def main():
     epoch = 20;
     i = np.arange(0, epoch, 1);
     base_learning_rate = 1e-5;
-    # descend_pattern = 1 / (1 + np.exp(i + 1 - epoch / 2)); # sigmoid
-    descend_pattern = (epoch - i) / epoch; # linear
+    descend_pattern = 1 / (1 + np.exp(i + 1 - epoch / 2)); # sigmoid
+    # descend_pattern = (epoch - i) / epoch; # linear
+    # descend_pattern = 1 / (i + 1); # hyperbola
     learning_rate = base_learning_rate * descend_pattern;
-    # print(learning_rate);
+    print(learning_rate);
 
     for ep in range(epoch):
         lr = learning_rate[ep];
-        print("training epoch %d/%d with learning rate %g" % (ep+1, epoch, lr));
         training_set = data.preprocess_training_set();
+        print("training epoch %d/%d with learning rate %g" % (ep+1, epoch, lr));
         yes = 0;
         cnt = 0;
         for elem in training_set:
@@ -58,7 +59,7 @@ def main():
             predict = np.argmax(model['score']);
             yes += (predict == label);
             cnt += 1;
-            if(cnt % 100 == 0):
+            if(cnt % 1000 == 0):
                 print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
         data.save_model(model);
         print("\nmodel saved");

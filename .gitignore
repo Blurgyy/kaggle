@@ -1,8 +1,10 @@
 # csv, tsv
-# *.csv
-# *.csv.*
-# *.tsv
-# *.tsv.*
+*.csv
+*.csv.*
+!train.csv
+!test.csv
+*.tsv
+*.tsv.*
 
 # pycache
 __pycache__/

@@ -107,7 +107,7 @@ def load_model(ipath = None):
     else:
         model_dmp_path = ipath;
     if(not os.path.exists(model_dmp_path)):
-        raise ValueError("file [%s] does not exist!" % model_dmp_path);
+        raise ValueError("file [%s] does not exist" % model_dmp_path);
     model = None;
     with open(model_dmp_path, 'rb') as f:
         model = pickle.load(f);

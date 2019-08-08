@@ -50,19 +50,22 @@ def sgd_backward(model, dz, learning_rate):
 
 def adam_backward(model, dz, iter_cnt, learning_rate):
     model['layer_2'].backward(dz);
-    adam_update(model['layer_2'].dw, model['w2'], model['w2.m'], model['w2.v'], iter_cnt, learning_rate);
+    adam_update(model['layer_2'].dw, model['w2'], model['w2.m'], model['w2.v'], 
+                iter_cnt, learning_rate, model['reg_strength']);
     model['w2'] -= model['reg_strength'] * model['w2']; # regularization 
     model['ReLU'].backward(model['layer_2'].dx);
     model['layer_1'].backward(model['ReLU'].dx);
-    adam_update(model['layer_1'].dw, model['w1'], model['w1.m'], model['w1.v'], iter_cnt, learning_rate);
+    adam_update(model['layer_1'].dw, model['w1'], model['w1.m'], model['w1.v'], 
+                iter_cnt, learning_rate, model['reg_strength']);
     model['w1'] -= model['reg_strength'] * model['w1']; # regularization
 
 beta1 = 0.9;
 beta2 = 0.995;
 eps = 1e-7; # avoid deviding by zero
-def adam_update(dx, x, m, v, iter_cnt, learning_rate):
+def adam_update(dx, x, m, v, iter_cnt, learning_rate, reg_strength):
     m = beta1 * m + (1 - beta1) * dx;
     v = beta2 * v + (1 - beta2) * (dx**2);
     m /= 1 - beta1**iter_cnt;
     v /= 1 - beta2**iter_cnt;
+    x += -reg_strength * x; # regularization (first do regularization update then do Adam update)
     x += -learning_rate * m / (np.sqrt(v) + eps);

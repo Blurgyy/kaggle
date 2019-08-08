@@ -8,7 +8,6 @@ import data
 import nn 
 import click 
 
-@roc.jit
 @click.command()
 @click.option("--epoch", type = int, default = 10, 
               help = "Specifies number of epoches, 10 by default")

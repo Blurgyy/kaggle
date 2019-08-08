@@ -3,7 +3,7 @@
 __author__ = "Blurgy";
 
 import data 
-import flow 
+import nn 
 import os 
 import sys 
 import numpy as np 
@@ -18,7 +18,7 @@ def main(model_dump_file):
 	with open(fpath, 'w') as f:
 		f.write("ImageId,Label");
 		for i in range(len(testing_set)):
-			flow.forward(model, testing_set[i]);
+			nn.forward(model, testing_set[i]);
 			f.write("\n%d,%d" % (i+1, np.argmax(model['score'])));
 
 if(__name__ == "__main__"):

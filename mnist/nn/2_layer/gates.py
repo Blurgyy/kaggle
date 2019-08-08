@@ -7,7 +7,6 @@ import numpy as np
 class gate:
     def __init__(self, ):
         self.z = None;
-        pass;
 
 class ReLU(gate):
     def __init__(self, ):

@@ -8,16 +8,17 @@ import data
 import nn 
 import click 
 
+@roc.jit
 @click.command()
-@click.option("--epoch", type = int, default = 20, 
-              help = "Specifies number of epoches, 20 by default")
-@click.option("--rate", type = float, default = 1e-5, 
-              help = "Specifies value of initial learning rate, 1e-5 by default")
-@click.option("--reg", type = float, default = 1e-7,
-              help = "Specifies regularization strenth, 1e-7 by default")
-@click.option("--decay", type = click.Choice(["linear", "sigmoid", "hyperbola"]), 
-              default = "linear", 
-              help = "Specifies decay schedule of learning rate, linear by default")
+@click.option("--epoch", type = int, default = 10, 
+              help = "Specifies number of epoches, 10 by default")
+@click.option("--rate", type = float, default = 1e-3, 
+              help = "Specifies value of initial learning rate, 1e-3 by default")
+@click.option("--reg", type = float, default = 1e-6,
+              help = "Specifies regularization strenth, 1e-6 by default")
+@click.option("--decay", type = click.Choice(["constant", "linear", "sigmoid", "hyperbola"]), 
+              default = "constant", 
+              help = "Specifies decay schedule of learning rate, constant by default")
 def main(epoch, rate, reg, decay):
     input_size = 784;
     hidden_layer_size = 200;
@@ -31,6 +32,7 @@ def main(epoch, rate, reg, decay):
     learning_rate = base_learning_rate * decay_schedule;
     print(learning_rate);
 
+    iter_cnt = 0;
     for ep in range(epoch):
         lr = learning_rate[ep];
         training_set = data.preprocess_training_set();
@@ -38,6 +40,7 @@ def main(epoch, rate, reg, decay):
         yes = 0;
         cnt = 0;
         for elem in training_set:
+            iter_cnt += 1;
             label = elem[0];
             img = elem[1];
             nn.forward(model, img);
@@ -46,7 +49,8 @@ def main(epoch, rate, reg, decay):
             prob = np.exp(prob) / np.sum(np.exp(prob));
             dz = prob;
             dz[label] -= 1;
-            nn.backward(model, dz, lr);
+            # nn.backward(model, dz, lr);
+            nn.adam_backward(model, dz, iter_cnt, lr);
 
             predict = np.argmax(model['score']);
             yes += (predict == label);

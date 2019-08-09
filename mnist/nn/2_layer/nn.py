@@ -54,12 +54,12 @@ def adam_backward(model, dz, learning_rate):
     model['layer_2'].backward(dz);
     adam_update(model['layer_2'].dw, model['w2'], model['w2.m'], model['w2.v'], 
                 model['iter_cnt'], learning_rate, model['reg_strength']);
-    model['w2'] -= model['reg_strength'] * model['w2']; # regularization 
+    # model['w2'] -= model['reg_strength'] * model['w2']; # regularization 
     model['ReLU'].backward(model['layer_2'].dx);
     model['layer_1'].backward(model['ReLU'].dx);
     adam_update(model['layer_1'].dw, model['w1'], model['w1.m'], model['w1.v'], 
                 model['iter_cnt'], learning_rate, model['reg_strength']);
-    model['w1'] -= model['reg_strength'] * model['w1']; # regularization
+    # model['w1'] -= model['reg_strength'] * model['w1']; # regularization
 
 beta1 = 0.9;
 beta2 = 0.995;

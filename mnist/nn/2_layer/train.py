@@ -55,7 +55,7 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
                 prob = model['score'].copy();
                 prob -= np.max(prob);
                 prob = np.exp(prob) / np.sum(np.exp(prob));
-                dz = prob;
+                dz = prob.copy();
                 dz[label] -= 1;
                 dz /= batch_size;
                 # nn.sgd_backward(model, dz, lr);

@@ -16,11 +16,13 @@ import click
 @click.option("--reg", type = float, default = 1e-6,
               help = "Specifies regularization strenth, 1e-6 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
-              default = "exponential", 
-              help = "Specifies decay schedule of learning rate, exponential by default")
+              default = "constant", 
+              help = "Specifies decay schedule of learning rate, constant by default")
 @click.option("--continue-at", type = str, default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-def main(epoch, rate, reg, decay, continue_at):
+@click.option("--batch-size", type = int, default = 16,
+              help = "Specifies batch size, 16 by default")
+def main(epoch, rate, reg, decay, continue_at, batch_size):
     input_size = 784;
     h1_size = 100;
     h2_size = 30;
@@ -41,25 +43,46 @@ def main(epoch, rate, reg, decay, continue_at):
         lr = learning_rate[ep];
         training_set = data.preprocess_training_set();
         print("training epoch %d/%d with learning rate %g" % (ep+1, epoch, lr));
+        batches = nn.sample_batches(training_set, batch_size);
         yes = 0;
         cnt = 0;
-        for elem in training_set:
-            label = elem[0];
-            img = elem[1];
-            nn.forward(model, img, is_test_time = False);
-            prob = model['score'].copy();
-            prob -= np.max(prob);
-            prob = np.exp(prob) / np.sum(np.exp(prob));
-            dz = prob.copy();
-            dz[label] -= 1;
-            # nn.backward(model, dz, lr);
-            nn.adam_backward(model, dz, lr);
+        for batch in batches:
+            dz = np.zeros((10, 1));
+            for item in batch:
+                label, img = item;
+                nn.forward(model, img, is_test_time = False);
+                prob = model['score'].copy();
+                prob -= np.max(prob);
+                prob = np.exp(prob) / np.sum(np.exp(prob));
+                prob[label] -= 1;
+                dz += prob;
 
-            predict = np.argmax(model['score']);
-            yes += (predict == label);
-            cnt += 1;
-            if(cnt % 1000 == 0):
-                print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
+                predict = np.argmax(model['score']);
+                yes += (predict == label);
+                cnt += 1;
+                if(cnt % 1000 == 0):
+                    print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
+            dz /= len(batch);
+            # nn.sgd_backward(model, dz, lr);
+            nn.adam_backward(model, dz, lr);
+        #*******************************************************************#
+        # for elem in training_set:
+        #     label = elem[0];
+        #     img = elem[1];
+        #     nn.forward(model, img, is_test_time = False);
+        #     prob = model['score'].copy();
+        #     prob -= np.max(prob);
+        #     prob = np.exp(prob) / np.sum(np.exp(prob));
+        #     dz = prob.copy();
+        #     dz[label] -= 1;
+        #     predict = np.argmax(model['score']);
+        #     yes += (predict == label);
+        #     cnt += 1;
+        #     if(cnt % 1000 == 0):
+        #         print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
+        #     # nn.backward(model, dz, lr);
+        #     nn.adam_backward(model, dz, lr);
+
         data.save_model(model);
         print("\nmodel saved\n");
 

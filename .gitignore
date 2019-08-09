@@ -1,3 +1,7 @@
+# images
+*.jpg
+*.png
+
 # csv, tsv
 *.csv
 *.csv.*

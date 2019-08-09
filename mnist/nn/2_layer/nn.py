@@ -33,10 +33,10 @@ def init_model(input_size, hidden_layer_size, output_size, reg_strength):
     model['score'] = None;
     return model;
 
-def forward(model, img):
+def forward(model, img, is_test_time):
     model['input'] = img;
     model['h1'] = model['layer_1'].forward(model['w1'], model['input']);
-    model['h1'] = model['ReLU'].forward(model['h1']);
+    model['h1'] = model['ReLU'].forward(model['h1'], is_test_time);
     model['score'] = model['layer_2'].forward(model['w2'], model['h1']);
 
 def sgd_backward(model, dz, learning_rate):

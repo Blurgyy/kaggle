@@ -11,8 +11,14 @@ class gate:
 class ReLU(gate):
     def __init__(self, ):
         super().__init__();
-    def forward(self, x, ):
-        self.mask = (x > 0.01);
+        self.p = 0.5; # dropout ratio
+    def forward(self, x, is_test_time):
+        self.relu_mask = (x > 0.01);
+        if(is_test_time):
+            self.dropout_mask = self.p;
+        else:
+            self.dropout_mask = (np.random.rand(*x.shape) < self.p);
+        self.mask = self.relu_mask * self.dropout_mask;
         self.z = x * self.mask;
         # print(np.max(self.z));
         return self.z;
@@ -26,7 +32,7 @@ class multiply_gate(gate):
     def forward(self, w, x, ):
         self.w = w;
         self.x = x;
-        self.z = np.dot(w, x);
+        self.z = np.dot(self.w, self.x);
         return self.z;
     def backward(self, dz, ):
         # @return dW and dx;

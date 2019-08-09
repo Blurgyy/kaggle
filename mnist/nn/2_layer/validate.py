@@ -18,7 +18,7 @@ def main(model_dump_file):
 	with open(fpath, 'w') as f:
 		f.write("ImageId,Label");
 		for i in range(len(testing_set)):
-			nn.forward(model, testing_set[i]);
+			nn.forward(model, testing_set[i], is_test_time = True);
 			f.write("\n%d,%d" % (i+1, np.argmax(model['score'])));
 
 if(__name__ == "__main__"):

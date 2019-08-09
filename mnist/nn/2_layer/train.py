@@ -42,7 +42,7 @@ def main(epoch, rate, reg, decay):
             iter_cnt += 1;
             label = elem[0];
             img = elem[1];
-            nn.forward(model, img);
+            nn.forward(model, img, is_test_time = False);
             prob = model['score'];
             prob -= np.max(prob);
             prob = np.exp(prob) / np.sum(np.exp(prob));
@@ -54,7 +54,7 @@ def main(epoch, rate, reg, decay):
             predict = np.argmax(model['score']);
             yes += (predict == label);
             cnt += 1;
-            if(cnt % 1000 == 0):
+            if(cnt % 100 == 0):
                 print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
         data.save_model(model);
         print("\nmodel saved\n");

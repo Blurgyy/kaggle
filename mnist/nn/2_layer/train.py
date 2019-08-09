@@ -55,7 +55,6 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
                 prob = model['score'].copy();
                 prob -= np.max(prob);
                 prob = np.exp(prob) / np.sum(np.exp(prob));
-                loss_curve.append(-np.log(prob[label]));
                 dz = prob;
                 dz[label] -= 1;
                 dz /= batch_size;
@@ -66,6 +65,7 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
                 yes += (predict == label);
                 cnt += 1;
                 if(cnt % 1000 == 0):
+                    loss_curve.append(-np.log(prob[label]));
                     print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
             # dz /= batch_size;
         precision_curve.append(yes/cnt);

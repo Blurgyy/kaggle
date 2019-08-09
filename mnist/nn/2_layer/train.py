@@ -18,11 +18,16 @@ import click
 @click.option("--decay", type = click.Choice(["constant", "linear", "sigmoid", "hyperbola"]), 
               default = "constant", 
               help = "Specifies decay schedule of learning rate, constant by default")
-def main(epoch, rate, reg, decay):
+@click.option("--continue-at", type = str, default = None,
+              help = "Continues training at specified file, initializes a new model if not specified")
+def main(epoch, rate, reg, decay, continue_at):
     input_size = 784;
     hidden_layer_size = 200;
     output_size = 10;
-    model = nn.init_model(input_size, hidden_layer_size, output_size, reg);
+    if(continue_at and os.path.exists(continue_at)):
+        model = data.load_model(continue_at);
+    else:
+        model = nn.init_model(input_size, hidden_layer_size, output_size, reg);
 
     # epoch = 20;
     # base_learning_rate = 1e-5;
@@ -31,7 +36,6 @@ def main(epoch, rate, reg, decay):
     learning_rate = base_learning_rate * decay_schedule;
     print(learning_rate);
 
-    iter_cnt = 0;
     for ep in range(epoch):
         lr = learning_rate[ep];
         training_set = data.preprocess_training_set();
@@ -39,7 +43,6 @@ def main(epoch, rate, reg, decay):
         yes = 0;
         cnt = 0;
         for elem in training_set:
-            iter_cnt += 1;
             label = elem[0];
             img = elem[1];
             nn.forward(model, img, is_test_time = False);
@@ -49,12 +52,12 @@ def main(epoch, rate, reg, decay):
             dz = prob;
             dz[label] -= 1;
             # nn.backward(model, dz, lr);
-            nn.adam_backward(model, dz, iter_cnt, lr);
+            nn.adam_backward(model, dz, lr);
 
             predict = np.argmax(model['score']);
             yes += (predict == label);
             cnt += 1;
-            if(cnt % 100 == 0):
+            if(cnt % 1000 == 0):
                 print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
         data.save_model(model);
         print("\nmodel saved\n");

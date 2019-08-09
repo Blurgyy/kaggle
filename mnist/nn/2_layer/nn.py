@@ -52,6 +52,8 @@ def decay_schedule(length, name):
         return 1 / (i + 1);
     elif(name == "constant"):
         return np.ones(length);
+    elif(name == "exponential"):
+        return 0.95 ** (i);
 
 def init_model(input_size, hidden_layer_size, output_size, reg_strength):
     model = {};
@@ -71,6 +73,18 @@ def init_model(input_size, hidden_layer_size, output_size, reg_strength):
     model['iter_cnt'] = 0;
     return model;
 
+def sample_batches(training_set, batch_size):
+    batch = [];
+    ret = [];
+    for elem in training_set:
+        batch.append(elem);
+        if(len(batch) == batch_size):
+            ret.append(batch);
+            batch = [];
+    if(len(batch) > 0):
+        ret.append(batch);
+    return ret;
+
 def forward(model, img, is_test_time):
     model['input'] = img;
     model['h1'] = model['layer_1'].forward(model['w1'], model['input']);
@@ -79,12 +93,12 @@ def forward(model, img, is_test_time):
 
 def sgd_backward(model, dz, learning_rate):
     model['layer_2'].backward(dz);
-    model['w2'] -= learning_rate * model['layer_2'].dw; # gradient descent 
     model['w2'] -= model['reg_strength'] * model['w2']; # regularization 
+    model['w2'] -= learning_rate * model['layer_2'].dw; # gradient descent 
     model['ReLU'].backward(model['layer_2'].dx);
     model['layer_1'].backward(model['ReLU'].dx);
-    model['w1'] -= learning_rate * model['layer_1'].dw; # gradient descent
     model['w1'] -= model['reg_strength'] * model['w1']; # regularization
+    model['w1'] -= learning_rate * model['layer_1'].dw; # gradient descent
 
 def adam_backward(model, dz, learning_rate):
     model['iter_cnt'] += 1;
@@ -104,7 +118,7 @@ eps = 1e-7; # prevent devision by zero
 def adam_update(dx, x, m, v, iter_cnt, learning_rate, reg_strength):
     m = beta1 * m + (1 - beta1) * dx;
     v = beta2 * v + (1 - beta2) * (dx**2);
-    m /= 1 - beta1**iter_cnt;
-    v /= 1 - beta2**iter_cnt;
+    # m /= 1 - beta1**iter_cnt;
+    # v /= 1 - beta2**iter_cnt;
     x += -reg_strength * x; # regularization (first do regularization update then do Adam update)
     x += -learning_rate * m / (np.sqrt(v) + eps);

@@ -3,7 +3,45 @@
 __author__ = "Blurgy";
 
 import numpy as np
-import gates 
+
+class gate:
+    def __init__(self, ):
+        self.z = None;
+
+class ReLU(gate):
+    def __init__(self, ):
+        super().__init__();
+        self.p = 0.5; # dropout ratio
+    def forward(self, x, is_test_time):
+        self.relu_mask = (x > 0.01);
+        if(is_test_time):
+            self.dropout_mask = self.p;
+        else:
+            self.dropout_mask = (np.random.rand(*x.shape) < self.p);
+        self.mask = self.relu_mask * self.dropout_mask;
+        self.z = x * self.mask;
+        # print(np.max(self.z));
+        return self.z;
+    def backward(self, dz):
+        self.dx = dz * self.mask;
+        return self.dx;
+
+class multiply_gate(gate):
+    def __init__(self, ):
+        super().__init__();
+    def forward(self, w, x, ):
+        self.w = w;
+        self.x = x;
+        self.z = np.dot(self.w, self.x);
+        return self.z;
+    def backward(self, dz, ):
+        # @return dW and dx;
+        self.dw = np.dot(dz, self.x.T);
+        self.dx = np.dot(self.w.T, dz);
+        # print(dz);
+        # print(self.dw.shape, self.dx.shape);
+        return [self.dw, self.dx];
+
 
 def decay_schedule(length, name):
     i = np.arange(0, length, 1);
@@ -27,21 +65,21 @@ def init_model(input_size, h1_size, h2_size, output_size, reg_strength):
     model['w1'] = 0.01 * np.random.randn(h1_size, input_size);
     model['w1.m'] = np.zeros(model['w1'].shape); # Adam update
     model['w1.v'] = np.zeros(model['w1'].shape); # Adam update
-    model['layer_1'] = gates.multiply_gate();
+    model['layer_1'] = multiply_gate();
     model['h1'] = None;
-    model['ReLU_1'] = gates.ReLU();
+    model['ReLU_1'] = ReLU();
 
     model['w2'] = 0.01 * np.random.randn(h2_size, h1_size);
     model['w2.m'] = np.zeros(model['w2'].shape); # Adam update
     model['w2.v'] = np.zeros(model['w2'].shape); # Adam update
-    model['layer_2'] = gates.multiply_gate();
+    model['layer_2'] = multiply_gate();
     model['h2'] = None;
-    model['ReLU_2'] = gates.ReLU();
+    model['ReLU_2'] = ReLU();
 
     model['w3'] = 0.01 * np.random.randn(output_size, h2_size);
     model['w3.m'] = np.zeros(model['w3'].shape); # Adam update
     model['w3.v'] = np.zeros(model['w3'].shape); # Adam update
-    model['layer_3'] = gates.multiply_gate();
+    model['layer_3'] = multiply_gate();
     model['score'] = None;
     return model;
 

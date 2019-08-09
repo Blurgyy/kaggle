@@ -5,7 +5,6 @@ __author__ = "Blurgy";
 import os 
 import pickle 
 import random 
-import gates 
 import numpy as np 
 
 def load_training_set():

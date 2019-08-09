@@ -21,8 +21,8 @@ import plot
               help = "Specifies decay schedule of learning rate, exponential by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-@click.option("--batch-size", type = int, default = 16,
-              help = "Specifies batch size, 16 by default")
+@click.option("--batch-size", type = int, default = 10,
+              help = "Specifies batch size, 10 by default")
 def main(epoch, rate, reg, decay, continue_at, batch_size):
     input_size = 784;
     hidden_layer_size = 200;

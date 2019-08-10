@@ -71,6 +71,8 @@ def init_model(input_size, hidden_layer_size, output_size, reg_strength):
     model['layer_2'] = multiply_gate();
     model['score'] = None;
     model['iter_cnt'] = 0;
+    model['w1.grad'] = np.zeros(model['w1'].shape);
+    model['w2.grad'] = np.zeros(model['w2'].shape);
     return model;
 
 def sample_batches(training_set, batch_size):
@@ -91,14 +93,20 @@ def forward(model, img, is_test_time):
     model['h1'] = model['ReLU'].forward(model['h1'], is_test_time);
     model['score'] = model['layer_2'].forward(model['w2'], model['h1']);
 
-def sgd_backward(model, dz, learning_rate):
+def update_weights(model, learning_rate):
+    model['w1'] += model['reg_strength'] * learning_rate * model['w1'];
+    model['w2'] += model['reg_strength'] * learning_rate * model['w2'];
+    model['w1'] += -learning_rate * model['w1.grad'];
+    model['w2'] += -learning_rate * model['w2.grad'];
+    model['w1.grad'] *= 0;
+    model['w2.grad'] *= 0;
+
+def sgd_backward(model, dz, batch_size):
     model['layer_2'].backward(dz);
-    model['w2'] -= model['reg_strength'] * model['w2']; # regularization 
-    model['w2'] -= learning_rate * model['layer_2'].dw; # gradient descent 
+    model['w2.grad'] += model['layer_2'].dw / batch_size;
     model['ReLU'].backward(model['layer_2'].dx);
     model['layer_1'].backward(model['ReLU'].dx);
-    model['w1'] -= model['reg_strength'] * model['w1']; # regularization
-    model['w1'] -= learning_rate * model['layer_1'].dw; # gradient descent
+    model['w1.grad'] += model['layer_1'].dw / batch_size;
 
 def adam_backward(model, dz, learning_rate):
     model['iter_cnt'] += 1;
@@ -120,5 +128,4 @@ def adam_update(dx, x, m, v, iter_cnt, learning_rate, reg_strength):
     v = beta2 * v + (1 - beta2) * (dx**2);
     # m /= 1 - beta1**iter_cnt;
     # v /= 1 - beta2**iter_cnt;
-    x += -reg_strength * x; # regularization (first do regularization update then do Adam update)
     x += -learning_rate * m / (np.sqrt(v) + eps);

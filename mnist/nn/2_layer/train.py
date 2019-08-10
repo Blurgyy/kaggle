@@ -14,8 +14,8 @@ import plot
               help = "Specifies number of epoches, 10 by default")
 @click.option("--rate", type = float, default = 1e-3, 
               help = "Specifies value of initial learning rate, 1e-3 by default")
-@click.option("--reg", type = float, default = 1e-6,
-              help = "Specifies regularization strenth, 1e-6 by default")
+@click.option("--reg", type = float, default = 1e-3,
+              help = "Specifies value of [regularization strenth]/[learning rate], 1e-3 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")
@@ -57,9 +57,7 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
                 prob = np.exp(prob) / np.sum(np.exp(prob));
                 dz = prob.copy();
                 dz[label] -= 1;
-                dz /= batch_size;
-                # nn.sgd_backward(model, dz, lr);
-                nn.adam_backward(model, dz, lr);
+                nn.sgd_backward(model, dz, batch_size);
 
                 predict = np.argmax(model['score']);
                 yes += (predict == label);
@@ -67,7 +65,7 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
                 if(cnt % 1000 == 0):
                     loss_curve.append(-np.log(prob[label]));
                     print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
-            # dz /= batch_size;
+            nn.update_weights(model, lr);
         precision_curve.append(yes/cnt);
         precision_curve.save("precision.jpg");
         loss_curve.save("loss.jpg");

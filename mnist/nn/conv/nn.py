@@ -201,6 +201,7 @@ def update(model, learning_rate):
     model['pooling2'].update(learning_rate);
     model['conv4'].update(learning_rate);
     model['conv3'].update(learning_rate);
+    model['pooling1'].update(learning_rate);
     model['conv2'].update(learning_rate);
     model['conv1'].update(learning_rate);
 

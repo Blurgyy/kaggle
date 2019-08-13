@@ -44,6 +44,7 @@ class conv_layer:
         self.filters = [];
         # self.bias = 
         self.init_filters();
+        self.df = []
     def init_filters(self, ):
         for i in range(self.k_filters):
             self.filters.append(fltr(size = self.f_size, depth = self.f_depth));
@@ -58,32 +59,24 @@ class conv_layer:
         return self.z;
     def backward(self, dz, ):
         # print(dz.shape);
-        self.df = [];
+        if(self.df == []):
+            for i in range(0, self.k_filters):
+                self.df.append(np.zeros((self.f_depth, self.f_size, self.f_size)));
         self.dx = np.pad(np.zeros(self.x.shape), ((0,0), (self.padding,self.padding), (self.padding,self.padding)));
         for i in range(0, dz.shape[0]):
-            for f in self.filters:
-                df = np.zeros(f.f.shape);
+            # for f in self.filters:
+            for j in range(self.k_filters):
                 # print(self.dx.shape);
-                for ver in range(0, self.dx.shape[1]-f.size+1, self.stride):
-                    for hor in range(0, self.dx.shape[2]-f.size+1, self.stride):
-                        self.dx[:, ver:ver+f.size, hor:hor+f.size] += f.f * dz[i,int(ver/self.stride),int(hor/self.stride)];
-                        df += self.dx[:, ver:ver+f.size, hor:hor+f.size] * dz[i,int(ver/self.stride),int(hor/self.stride)];
-                self.df.append(df);
+                for ver in range(0, self.dx.shape[1]-self.f_size+1, self.stride):
+                    for hor in range(0, self.dx.shape[2]-self.f_size+1, self.stride):
+                        self.dx[:, ver:ver+self.f_size, hor:hor+self.f_size] += self.filters[j].f * dz[i,int(ver/self.stride),int(hor/self.stride)];
+                        self.df[j] += self.dx[:, ver:ver+self.f_size, hor:hor+self.f_size] * dz[i,int(ver/self.stride),int(hor/self.stride)];
         self.dx = self.dx[:, self.padding:self.dx.shape[1]-self.padding, self.padding:self.dx.shape[2]-self.padding];
         self.db = dz;
     def update(self, learning_rate, ):
         for i in range(self.k_filters):
             self.filters[i].f += -learning_rate * self.df[i];
-        # self.bias += -learning_rate * 0.1 * self.db;
-
-# class pooling_layer:
-#     def __init__(self, size, stride):
-#         self.size = size;
-#         self.stride = stride;
-#     def forward(self, x, ):
-#         pass;
-#     def backward(self, dz, ):
-#         pass;
+        self.df = [];
 
 class fc_layer:
     def __init__(self, input_size, output_size):
@@ -105,12 +98,14 @@ class fc_layer:
         self.z = np.dot(self.w, self.x) + self.b;
         return self.z;
     def backward(self, dz, ):
-        self.dw = np.dot(dz, self.x.T);
+        self.dw += np.dot(dz, self.x.T);
+        self.db += dz;
         self.dx = np.dot(self.w.T, dz);
-        self.db = dz;
     def update(self, learning_rate, ):
         self.w += -learning_rate * self.dw;
         self.b += -learning_rate * 0.1 * self.db;
+        self.dw = 0;
+        self.db = 0;
 
 class ReLU:
     def __init__(self, ):
@@ -128,6 +123,31 @@ class ReLU:
     def backward(self, dz, ):
         self.dx = dz * self.mask;
         return self.dx;
+
+def decay_schedule(length, name):
+    i = np.arange(0, length, 1);
+    if(name == "sigmoid"):
+        return 1 / (1 + np.exp(i + 1 - length / 2));
+    elif(name == "linear"):
+        return (length - i) / length;
+    elif(name == "hyperbola"):
+        return 1 / (i + 1);
+    elif(name == "constant"):
+        return np.ones(length);
+    elif(name == "exponential"):
+        return 0.95 ** (i);
+
+def sample_batches(training_set, batch_size):
+    batch = [];
+    ret = [];
+    for elem in training_set:
+        batch.append(elem);
+        if(len(batch) == batch_size):
+            ret.append(batch);
+            batch = [];
+    if(len(batch) > 0):
+        ret.append(batch);
+    return ret;
 
 def init_model():
     model = {};

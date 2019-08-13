@@ -76,8 +76,11 @@ def preprocess_testing_set():
     # random.shuffle(testing_set);
     return testing_set;
 
-def save_model(model):
-    model_dmp_path = os.path.join("dmp", "model.pickle");
+def save_model(model, opath = None):
+    if(opath == None):
+        model_dmp_path = os.path.join("dmp", "model.pickle");
+    else:
+        model_dmp_path = opath;
     if(not os.path.exists("dmp")):
         os.makedirs("dmp");
     with open(model_dmp_path, 'wb') as f:

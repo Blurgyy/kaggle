@@ -136,26 +136,18 @@ def init_model():
                                 f_size = 3, f_depth = 1,
                                 stride = 1, padding = 1);
     model['relu1'] = ReLU();
-    model['conv2'] = conv_layer(k_filters = 8,
+    model['pooling1'] = conv_layer(k_filters = 4,
+                                   f_size = 2, f_depth = 4,
+                                   stride = 2, padding = 0);
+    model['conv2'] = conv_layer(k_filters = 16,
                                 f_size = 3, f_depth = 4,
                                 stride = 1, padding = 1);
     model['relu2'] = ReLU();
-    model['pooling1'] = conv_layer(k_filters = 8,
-                                   f_size = 2, f_depth = 8,
-                                   stride = 2, padding = 0);
-    model['conv3'] = conv_layer(k_filters = 32,
-                                f_size = 3, f_depth = 8,
-                                stride = 1, padding = 1);
-    model['relu3'] = ReLU();
-    model['conv4'] = conv_layer(k_filters = 32,
-                                f_size = 3, f_depth = 32,
-                                stride = 1, padding = 1);
-    model['relu4'] = ReLU();
     model['pooling2'] = conv_layer(k_filters = 16,
-                                   f_size = 2, f_depth = 32,
+                                   f_size = 2, f_depth = 16,
                                    stride = 2, padding = 0);
     model['fc6'] = fc_layer(input_size = 784, output_size = 200);
-    model['relu5'] = ReLU();
+    model['relu3'] = ReLU();
     model['fc7'] = fc_layer(input_size = 200, output_size = 10);
     model['output'] = None;
     return model;
@@ -164,44 +156,33 @@ def forward(model, x, is_test_time):
     model['input'] = x;
     x = model['conv1'].forward(x);
     x = model['relu1'].forward(x, is_test_time);
+    x = model['pooling1'].forward(x);
     x = model['conv2'].forward(x);
     x = model['relu2'].forward(x, is_test_time);
-    x = model['pooling1'].forward(x);
-    x = model['conv3'].forward(x);
-    x = model['relu3'].forward(x, is_test_time);
-    x = model['conv4'].forward(x);
-    x = model['relu4'].forward(x, is_test_time);
     x = model['pooling2'].forward(x);
     x = x.reshape(784, 1);
     x = model['fc6'].forward(x);
     # print("fc6 output:", x.shape);
-    x = model['relu5'].forward(x, is_test_time);
+    x = model['relu3'].forward(x, is_test_time);
     model['output'] = model['fc7'].forward(x);
     # print("fc7 output:", model['output'].shape);
     return model['output'];
 
 def backward(model, dz):
     model['fc7'].backward(dz);
-    model['relu5'].backward(model['fc7'].dx);
-    model['fc6'].backward(model['relu5'].dx);
+    model['relu3'].backward(model['fc7'].dx);
+    model['fc6'].backward(model['relu3'].dx);
     model['pooling2'].backward(model['fc6'].dx.reshape(16, 7, 7));
-    model['relu4'].backward(model['pooling2'].dx);
-    model['conv4'].backward(model['relu4'].dx);
-    model['relu3'].backward(model['conv4'].dx);
-    model['conv3'].backward(model['relu3'].dx);
-    model['pooling1'].backward(model['conv3'].dx);
-    model['relu2'].backward(model['pooling1'].dx);
+    model['relu2'].backward(model['pooling2'].dx);
     model['conv2'].backward(model['relu2'].dx);
-    model['relu1'].backward(model['conv2'].dx);
+    model['pooling1'].backward(model['conv2'].dx);
+    model['relu1'].backward(model['pooling1'].dx);
     model['conv1'].backward(model['relu1'].dx);
 
 def update(model, learning_rate):
     model['fc7'].update(learning_rate);
     model['fc6'].update(learning_rate);
     model['pooling2'].update(learning_rate);
-    model['conv4'].update(learning_rate);
-    model['conv3'].update(learning_rate);
-    model['pooling1'].update(learning_rate);
     model['conv2'].update(learning_rate);
+    model['pooling1'].update(learning_rate);
     model['conv1'].update(learning_rate);
-

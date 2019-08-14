@@ -1,3 +1,7 @@
+# temporary files
+tmp.*
+*.tmp
+
 # images
 *.jpg
 *.png

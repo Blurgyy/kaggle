@@ -10,8 +10,8 @@ import click
 @click.command()
 @click.option("--epoch", type = int, default = 10, 
               help = "Specifies number of epoches, 10 by default")
-@click.option("--rate", type = float, default = 1e-2, 
-              help = "Specifies value of initial learning rate, 1e-2 by default")
+@click.option("--rate", type = float, default = 1e1, 
+              help = "Specifies value of initial learning rate, 1e1 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")
@@ -30,6 +30,7 @@ def main(epoch, rate, decay, continue_at, batch_size):
 
     yes = 0;
     cnt = 0;
+    loss = 0;
     for ep in range(epoch):
         lr = learning_rate[ep];
         train = data.preprocess_training_set();
@@ -45,6 +46,8 @@ def main(epoch, rate, decay, continue_at, batch_size):
                 prob = np.exp(prob) / np.sum(np.exp(prob));
                 dz = prob.copy();
                 dz[label] -= 1;
+                # print(dz);
+                loss += -np.log(prob[label]);
                 nn.backward(model, dz);
 
                 pred = np.argmax(model['output']);
@@ -54,7 +57,8 @@ def main(epoch, rate, decay, continue_at, batch_size):
                     print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
             nn.update(model, lr/batch_size);
             data.save_model(model);
-            print("\nupdated", end = '\r');
+            print("\nupdated, loss = %g" % (loss));
+            loss = 0;
 
 if(__name__ == "__main__"):
     main();

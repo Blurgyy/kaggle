@@ -29,7 +29,7 @@ def conv(x, f, s = 1):
 #         self.f = 0.001 * np.random.randn(self.depth, self.size, self.size);
 
 def fltr(size, depth):
-    return 0.001 * np.random.randn(depth, size, size);
+    return 0.01 * np.random.randn(depth, size, size);
 
 class conv_layer:
     def __init__(self, k_filters, f_size, f_depth, stride, padding, ):
@@ -75,6 +75,7 @@ class conv_layer:
                         self.df[j] += self.x[:, ver:ver+self.f_size, hor:hor+self.f_size] * dz[i,int(ver/self.stride),int(hor/self.stride)];
         self.dx = self.dx[:, self.padding:self.dx.shape[1]-self.padding, self.padding:self.dx.shape[2]-self.padding];
         self.db = dz;
+        return self.dx;
     def update(self, learning_rate, ):
         for i in range(self.k_filters):
             self.filters[i] += -learning_rate * self.df[i];
@@ -91,9 +92,9 @@ class fc_layer:
         self.dx = 0;
         self.db = 0;
     def init_weights(self, ):
-        self.w = 0.001 * np.random.randn(self.output_size, self.input_size);
+        self.w = 0.01 * np.random.randn(self.output_size, self.input_size);
     def init_bias(self):
-        self.b = 0.001 * np.random.randn(self.output_size, 1);
+        self.b = 0.01 * np.random.randn(self.output_size, 1);
     def forward(self, x, ):
         self.x = x;
         # print(self.w.shape, self.x.shape);
@@ -103,6 +104,7 @@ class fc_layer:
         self.dw += np.dot(dz, self.x.T);
         self.db += dz;
         self.dx = np.dot(self.w.T, dz);
+        return self.dx;
     def update(self, learning_rate, ):
         self.w += -learning_rate * self.dw;
         self.b += -learning_rate * 0.1 * self.db;

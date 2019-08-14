@@ -4,13 +4,11 @@ __author__ = "Blurgy";
 
 import numpy as np
 
-def conv(x, f, p = 1, s = 1):
+def conv(x, f, s = 1):
     # x: input;
     # f: filter
-    # p: padding
     # s: stride
     # requires x and f to have same depth
-    x = np.pad(x, ((0,0), (p,p), (p,p)));
     depth, f_wid, f_hei = f.shape;
     ret = [];
     row = [];
@@ -22,13 +20,16 @@ def conv(x, f, p = 1, s = 1):
     ret = np.array(ret);
     return ret;
 
-class fltr:
-    def __init__(self, size, depth, ):
-        self.size = size;
-        self.depth = depth;
-        self.init_weights();
-    def init_weights(self, ):
-        self.f = 0.001 * np.random.randn(self.depth, self.size, self.size);
+# class fltr:
+#     def __init__(self, size, depth, ):
+#         self.size = size;
+#         self.depth = depth;
+#         self.init_weights();
+#     def init_weights(self, ):
+#         self.f = 0.001 * np.random.randn(self.depth, self.size, self.size);
+
+def fltr(size, depth):
+    return 0.001 * np.random.randn(depth, size, size);
 
 class conv_layer:
     def __init__(self, k_filters, f_size, f_depth, stride, padding, ):
@@ -44,16 +45,17 @@ class conv_layer:
         self.filters = [];
         # self.bias = 
         self.init_filters();
-        self.df = []
+        self.df = [];
     def init_filters(self, ):
         for i in range(self.k_filters):
             self.filters.append(fltr(size = self.f_size, depth = self.f_depth));
     def forward(self, x, ):
         # x: w1 * h1 * d1
-        self.x = x;
+        # do padding in advance
+        self.x = np.pad(x, ((0,0), (self.padding, self.padding), (self.padding, self.padding)));
         self.z = [];
         for f in self.filters:
-            elem = conv(self.x, f.f, self.padding, self.stride)
+            elem = conv(self.x, f, self.stride)
             self.z.append(elem);
         self.z = np.array(self.z);
         return self.z;
@@ -62,20 +64,20 @@ class conv_layer:
         if(self.df == []):
             for i in range(0, self.k_filters):
                 self.df.append(np.zeros((self.f_depth, self.f_size, self.f_size)));
-        self.dx = np.pad(np.zeros(self.x.shape), ((0,0), (self.padding,self.padding), (self.padding,self.padding)));
+        self.dx = np.zeros(self.x.shape);
         for i in range(0, dz.shape[0]):
             # for f in self.filters:
             for j in range(self.k_filters):
                 # print(self.dx.shape);
                 for ver in range(0, self.dx.shape[1]-self.f_size+1, self.stride):
                     for hor in range(0, self.dx.shape[2]-self.f_size+1, self.stride):
-                        self.dx[:, ver:ver+self.f_size, hor:hor+self.f_size] += self.filters[j].f * dz[i,int(ver/self.stride),int(hor/self.stride)];
-                        self.df[j] += self.dx[:, ver:ver+self.f_size, hor:hor+self.f_size] * dz[i,int(ver/self.stride),int(hor/self.stride)];
+                        self.dx[:, ver:ver+self.f_size, hor:hor+self.f_size] += self.filters[j] * dz[i,int(ver/self.stride),int(hor/self.stride)];
+                        self.df[j] += self.x[:, ver:ver+self.f_size, hor:hor+self.f_size] * dz[i,int(ver/self.stride),int(hor/self.stride)];
         self.dx = self.dx[:, self.padding:self.dx.shape[1]-self.padding, self.padding:self.dx.shape[2]-self.padding];
         self.db = dz;
     def update(self, learning_rate, ):
         for i in range(self.k_filters):
-            self.filters[i].f += -learning_rate * self.df[i];
+            self.filters[i] += -learning_rate * self.df[i];
         self.df = [];
 
 class fc_layer:

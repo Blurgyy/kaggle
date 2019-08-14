@@ -10,8 +10,8 @@ import click
 @click.command()
 @click.option("--epoch", type = int, default = 10, 
               help = "Specifies number of epoches, 10 by default")
-@click.option("--rate", type = float, default = 1e-3, 
-              help = "Specifies value of initial learning rate, 1e-3 by default")
+@click.option("--rate", type = float, default = 1e-2, 
+              help = "Specifies value of initial learning rate, 1e-2 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")

@@ -11,7 +11,7 @@ import random
               help = "Continues training at specified file, initializes a new model if not specified")
 def main(continue_at):
     epoch = 1000;
-    learning_rate = 1e-1;
+    learning_rate = 1e-2;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:

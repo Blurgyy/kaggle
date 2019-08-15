@@ -233,7 +233,7 @@ def decay_schedule(length, name):
     elif(name == "constant"):
         return np.ones(length);
     elif(name == "exponential"):
-        return 0.95 ** (i);
+        return 0.995 ** (i);
 
 def init_model(reg):
     """

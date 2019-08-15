@@ -68,7 +68,7 @@ def fltr(size, depth):
     return 0.01 * np.random.randn(depth*size*size, 1);
 
 class conv_layer:
-    def __init__(self, k_filters, f_size, f_depth, stride, padding):
+    def __init__(self, k_filters, f_size, f_depth, padding, stride):
         # k: number of filters
         # f: filters' spatial extent
         # stride = 1
@@ -102,7 +102,7 @@ class conv_layer:
     def backward(self, dz, ):
         # dz.shape: (N, k_filters, out_h, out_w)
         self.db = np.sum(dz, axis=(0, 2, 3));
-        self.db.reshape(self.k_filters, -1);
+        # self.db.reshape(self.k_filters, 1);
         dz_reshaped = dz.transpose(1, 2, 3, 0).reshape(self.k_filters, -1);
         self.df = dz_reshaped @ self.x_col.T;
         self.df = self.df.reshape(self.filters.shape);
@@ -112,7 +112,9 @@ class conv_layer:
                          padding = self.padding, stride = self.stride);
         return self.dx;
     def update(self, learning_rate, ):
-        pass;
+        assert self.b.size == self.db.size
+        self.b += -learning_rate * self.db.reshape(self.k_filters, 1);
+        self.filters += -learning_rate * self.df;
 
 class pooling_layer:
     def __init__(self, size, padding, stride, ):
@@ -138,16 +140,16 @@ class pooling_layer:
         dx_col = np.zeros_like(self.x_col);
         dz = dz.transpose(2, 3, 0, 1); # ...
         dz_flat = dz.ravel();
-        print(dx_col[self.max_idx, range(self.max_idx.size)]);
-        print(dz_flat);
+        # print(dx_col[self.max_idx, range(self.max_idx.size)]);
+        # print(dz_flat);
         dx_col[self.max_idx, range(self.max_idx.size)] = dz_flat;
         self.dx = col2im(dx_col, (N*C, 1, H, W), 
                          filter_h = self.size, filter_w = self.size, 
                          padding = self.padding, stride = self.stride);
         self.dx = self.dx.reshape(self.x.shape);
         return self.dx;
-    def update(self, learning_rate):
-        pass;
+    # def update(self, learning_rate):
+    #     pass;
 
 
 class fc_layer:
@@ -157,30 +159,52 @@ class fc_layer:
         self.init_weights();
         self.init_bias();
     def init_weights(self, ):
-        self.w = 0.01 * np.random.randn(self.output_size, self.input_size);
+        self.w = 0.001 * np.random.randn(self.output_size, self.input_size);
     def init_bias(self):
-        self.b = 0.01 * np.random.randn(self.output_size, 1);
+        self.b = 0.001 * np.random.randn(self.output_size, 1);
     def forward(self, x, ):
         self.x = x;
-        N, H, W = self.x.shape;
-        assert W == 1
+        N = self.x.shape[0];
         x_reshaped = self.x.transpose(2, 1, 0).reshape(self.input_size, N);
-        self.z = self.w @ x_reshaped + self.b;
+        try:
+            self.z = self.w @ x_reshaped + self.b;
+        except RuntimeWarning:
+            print(np.max(self.w));
+            print(np.max(x_reshaped));
+            exit();
         self.z = self.z.T.reshape(N, self.output_size, 1);
         return self.z;
     def backward(self, dz, ):
-        N, H, W = self.x.shape;
-        assert W == 1
+        # print("\nfc_layer::backward()")
+        N = self.x.shape[0];
         self.db = np.sum(dz, axis=(0, 2));
         self.db = self.db.reshape(self.output_size, -1)
         dz_reshaped = dz.transpose(2, 1, 0).reshape(self.output_size, N);
         x_reshaped = self.x.transpose(2, 0, 1).reshape(N, self.input_size);
         self.dw = dz_reshaped @ x_reshaped;
+        # tmp_show(x_reshaped)
+        # print("dz:", dz_reshaped);
+        # print("dw", self.dw, self.dw.shape);
         self.dx = self.w.T @ dz_reshaped;
         self.dx = self.dx.T.reshape(N, self.input_size, 1);
         return self.dx;
     def update(self, learning_rate, ):
-        pass;
+        # print("original: max =", np.max(self.w));
+        # print("updating: max =", np.max(self.dw));
+        self.w += -learning_rate * self.dw;
+        self.b += -learning_rate * self.db;
+        # print("updated: max =", np.max(self.w));
+
+def tmp_show(x):
+    h = 28
+    w = 28
+    x = x.ravel()
+    for i in range(h):
+        for j in range(w):
+            idx = i*h+j
+            # print(" " if x[idx] > 128 else "*", end = "")
+            print("%03d" % x[idx], end = " ")
+        print();
 
 class ReLU:
     def __init__(self, ):
@@ -213,28 +237,36 @@ def decay_schedule(length, name):
         return 0.95 ** (i);
 
 def sample_batches(training_set, batch_size):
-    batch = [];
-    ret = [];
+    X, Y, x, y = [], [], [], [];
+    cnt = 0;
     for elem in training_set:
-        batch.append(elem);
-        if(len(batch) == batch_size):
-            ret.append(batch);
-            batch = [];
-    if(len(batch) > 0):
-        ret.append(batch);
-    return ret;
+        label, imginfo = elem;
+        x.append(imginfo);
+        y.append(label);
+        cnt += 1;
+        if(cnt == batch_size):
+            X.append(np.array(x));
+            Y.append(np.array(y));
+            cnt = 0;
+            x = [];
+            y = [];
+    if(cnt > 0):
+        X.append(np.array(x));
+        Y.append(np.array(y));
+    return X, Y;
 
 def init_model():
     model = {};
-    model['input'] = None;
     model['conv1'] = conv_layer(k_filters = 4,
-                                f_size = 3, f_depth = 1);
+                                f_size = 3, f_depth = 1,
+                                padding = 1, stride = 1);
     model['relu1'] = ReLU();
-    # model['pooling1'] = 
+    model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['conv2'] = conv_layer(k_filters = 16,
-                                f_size = 3, f_depth = 4);
+                                f_size = 3, f_depth = 4,
+                                padding = 1, stride = 1);
     model['relu2'] = ReLU();
-    # model['pooling2'] = 
+    model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['fc6'] = fc_layer(input_size = 784, output_size = 200);
     model['relu3'] = ReLU();
     model['fc7'] = fc_layer(input_size = 200, output_size = 10);
@@ -242,36 +274,56 @@ def init_model():
     return model;
 
 def forward(model, x, is_test_time):
-    model['input'] = x;
     x = model['conv1'].forward(x);
     x = model['relu1'].forward(x, is_test_time);
     x = model['pooling1'].forward(x);
     x = model['conv2'].forward(x);
     x = model['relu2'].forward(x, is_test_time);
     x = model['pooling2'].forward(x);
-    x = x.reshape(784, 1);
+    N, C, H, W = x.shape;
+    x = x.reshape(N, -1, 1);
     x = model['fc6'].forward(x);
-    # print("fc6 output:", x.shape);
     x = model['relu3'].forward(x, is_test_time);
     model['output'] = model['fc7'].forward(x);
-    # print("fc7 output:", model['output'].shape);
     return model['output'];
 
 def backward(model, dz):
-    model['fc7'].backward(dz);
-    model['relu3'].backward(model['fc7'].dx);
-    model['fc6'].backward(model['relu3'].dx);
-    model['pooling2'].backward(model['fc6'].dx.reshape(16, 7, 7));
-    model['relu2'].backward(model['pooling2'].dx);
-    model['conv2'].backward(model['relu2'].dx);
-    model['pooling1'].backward(model['conv2'].dx);
-    model['relu1'].backward(model['pooling1'].dx);
-    model['conv1'].backward(model['relu1'].dx);
+    dz = model['fc7'].backward(dz);
+    dz = model['relu3'].backward(dz);
+    dz = model['fc6'].backward(dz);
+
+    N, C, H, W = model['pooling2'].z.shape;
+    dz = dz.reshape(N, C, H, W);
+    dz = model['pooling2'].backward(dz);
+    dz = model['relu2'].backward(dz);
+    dz = model['conv2'].backward(dz);
+    dz = model['pooling1'].backward(dz);
+    dz = model['relu1'].backward(dz);
+    model['conv1'].backward(dz);
+
+def grad(model, y):
+    prob = model['output'].copy();
+    prob -= np.max(prob, axis=1).reshape(-1,1,1);
+    prob = np.exp(prob) / np.sum(np.exp(prob), axis=1).reshape(-1,1,1);
+    # print("check:\n", prob, y);
+    dz = prob.copy();
+    a0 = np.arange(len(y)).reshape(-1,1);
+    y = y.reshape(-1,1);
+    a2 = np.repeat(0, len(y)).reshape(-1,1);
+    # dz[a0,y,a2] -= 1;
+    np.add.at(dz, (a0,y,a2), -1);
+    try:
+        loss = np.sum(-np.log(prob[a0,y,a2]))
+    except RuntimeWarning:
+        print("\nwhat's in log():");
+        print(prob[a0,y,a2]);
+        exit();
+    return dz, loss;
 
 def update(model, learning_rate):
     model['fc7'].update(learning_rate);
     model['fc6'].update(learning_rate);
-    model['pooling2'].update(learning_rate);
+    # model['pooling2'].update(learning_rate);
     model['conv2'].update(learning_rate);
-    model['pooling1'].update(learning_rate);
+    # model['pooling1'].update(learning_rate);
     model['conv1'].update(learning_rate);

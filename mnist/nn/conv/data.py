@@ -19,7 +19,7 @@ def load_training_set():
             imginfo = [];
             for i in range(1, len(data)):
                 imginfo.append(int(data[i].strip()));
-            imginfo = np.array(imginfo).reshape(-1, 1);
+            imginfo = np.array(imginfo).reshape(1, 28, 28);
             imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append([label, imginfo]);
             if(len(ret) % 1000 == 0):
@@ -38,7 +38,7 @@ def load_testing_set():
             imginfo = [];
             for i in range(0, len(data)):
                 imginfo.append(int(data[i].strip()));
-            imginfo = np.array(imginfo).reshape(-1, 1);
+            imginfo = np.array(imginfo).reshape(28, 28);
             imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append(imginfo);
             if(len(ret) % 1000 == 0):

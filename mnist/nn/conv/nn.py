@@ -78,22 +78,20 @@ class conv_layer:
         self.f_depth = f_depth;
         self.stride = stride;
         self.padding = padding;
-        # self.bias = 
         self.init_filters();
+        self.init_bias();
     def init_filters(self, ):
-        self.filters = [];
-        for i in range(self.k_filters):
-            self.filters.append(fltr(size = self.f_size, depth = self.f_depth));
-        self.filters = np.array(self.filters).reshape(self.k_filters, -1);
-        # self.df = np.zeros_like(self.filters);
+        self.filters = 0.01 * np.random.randn(self.k_filters, self.f_depth*self.f_size*self.f_size);
+    def init_bias(self, ):
+        self.b = 0.01 * np.random.randn(self.k_filters, 1);
     def forward(self, x, ):
-        N, C, H, W = x.shape
         self.x = x;
+        N, C, H, W = self.x.shape
         self.x_col = im2col(self.x, filter_h = self.f_size, filter_w = self.f_size, 
                           padding = self.padding, stride = self.stride);
         # self.x_col.shape: (fh*fw*fd, positions)
         # self.filters.shape: (k_filters, fh*fw*d)
-        self.z = self.filters @ self.x_col;
+        self.z = self.filters @ self.x_col + self.b;
         # self.z.shape: (k_filters, positions)
         out_h = int((H + 2 * self.padding - self.f_size) / self.stride + 1);
         out_w = int((W + 2 * self.padding - self.f_size) / self.stride + 1);
@@ -103,6 +101,8 @@ class conv_layer:
         return self.z;
     def backward(self, dz, ):
         # dz.shape: (N, k_filters, out_h, out_w)
+        self.db = np.sum(dz, axis=(0, 2, 3));
+        self.db.reshape(self.k_filters, -1);
         dz_reshaped = dz.transpose(1, 2, 3, 0).reshape(self.k_filters, -1);
         self.df = dz_reshaped @ self.x_col.T;
         self.df = self.df.reshape(self.filters.shape);

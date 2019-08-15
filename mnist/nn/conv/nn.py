@@ -4,44 +4,46 @@ __author__ = "Blurgy";
 
 import numpy as np
 
-def im2col(batch, f_size, padding, stride, ):
-    # batch: n * d * h * w
-    # stride = stride;
-    # f_size = f_size;
-    n, d, h, w = batch.shape;
-    p = padding;
-    batch_pad = np.pad(batch, ((0,0), (0,0), (p,p), (p,p)));
-    ret = [];
-    for x in batch_pad:
-        elem = None;
-        for ver in range(0, h+p*2-f_size+1, stride):
-            for hor in range(0, w+p*2-f_size+1, stride):
-                # print(x[:, ver:ver+f_size, hor:hor+f_size]);
-                # print(x[:, ver:ver+f_size, hor:hor+f_size].reshape(f_size*f_size*d, 1));
-                # input();
-                column = np.reshape(x[:, ver:ver+f_size, hor:hor+f_size], (f_size*f_size*d, 1));
-                if(type(elem).__name__ == "NoneType"):
-                    elem = column;
-                else:
-                    elem = np.hstack((elem, column));
-        ret.append(elem);
-    ret = np.array(ret);
-    # print("im2col batch.shape", batch.shape)
-    # print("im2col:\n", ret, ret.shape)
-    return ret;
+def get_im2col_indices(x_shape, filter_h, filter_w, padding, stride):
+    N, C, H, W = x_shape
+    out_h = int((H + 2 * padding - filter_h) / stride + 1)
+    out_w = int((W + 2 * padding - filter_h) / stride + 1)
 
-def col2im(batch, h, w):
-    n, k, h_w = batch.shape;
-    ret = [];
-    for x in batch:
-        elem = [];
-        for i in range(k):
-            elem.append(np.array(x[i, :]));
-        ret.append(np.array(elem).reshape(k, h, w));
-    ret = np.array(ret).reshape(n, k, h, w);
-    print("col2im batch.shape:", batch.shape);
-    print("col2im", ret.shape)
-    return ret;
+    i0 = np.repeat(np.arange(filter_h), filter_w)
+    i0 = np.tile(i0, C)
+    i1 = stride * np.repeat(np.arange(out_h), out_w)
+
+    j0 = np.tile(np.arange(filter_w), filter_h * C)
+    j1 = stride * np.tile(np.arange(out_w), out_h)
+
+    k = np.repeat(np.arange(C), filter_h * filter_w).reshape(-1, 1);
+    i = i0.reshape(-1, 1) + i1.reshape(1, -1)
+    j = j0.reshape(-1, 1) + j1.reshape(1, -1)
+
+    return (k, i, j)
+
+
+def im2col(x, filter_h, filter_w, padding, stride):
+    N, C, H, W = x.shape
+    k, i, j = get_im2col_indices(x.shape, filter_h, filter_w, padding, stride)
+    p = padding
+    x_pad = np.pad(x, ((0,0), (0,0), (p,p), (p,p)))
+    cols = x_pad[:, k, i, j]
+    cols = cols.transpose(1, 2, 0).reshape(filter_h*filter_w*C, -1)
+    return cols
+
+def col2im(cols, x_shape, filter_h, filter_w, padding, stride):
+    N, C, H, W = x_shape
+    p = padding
+    H_pad, W_pad = H + 2 * p, W + 2 * p
+    x_pad = np.zeros((N, C, H_pad, W_pad), dtype = cols.dtype)
+    k, i, j = get_im2col_indices(x_shape, filter_h, filter_w, p, stride)
+    cols_reshaped = cols.reshape(C * filter_h * filter_w, -1, N)
+    cols_reshaped = cols_reshaped.transpose(2, 0, 1)
+    np.add.at(x_pad, (slice(None), k, i, j), cols_reshaped)
+    if(p == 0):
+        return x_pad
+    return x_pad[:, :, p:-p, p:-p]
 
 def fltr(size, depth):
     return 0.01 * np.random.randn(depth*size*size, 1);
@@ -57,85 +59,76 @@ class conv_layer:
         self.f_depth = f_depth;
         self.stride = stride;
         self.padding = padding;
-        self.filters = [];
         # self.bias = 
         self.init_filters();
     def init_filters(self, ):
+        self.filters = [];
         for i in range(self.k_filters):
             self.filters.append(fltr(size = self.f_size, depth = self.f_depth));
-        self.filters = np.array(self.filters).reshape(self.k_filters, self.f_size*self.f_size*self.f_depth);
-        self.df = np.zeros(self.filters.shape);
+        self.filters = np.array(self.filters).reshape(self.k_filters, -1);
+        # self.df = np.zeros_like(self.filters);
     def forward(self, x, ):
-        # x: n * d * h * w
+        N, C, H, W = x.shape
         self.x = x;
-        n, d, h, w = self.x.shape;
-        output_h = int((h + 2*self.padding - self.f_size) / self.stride + 1);
-        output_w = int((w + 2*self.padding - self.f_size) / self.stride + 1);
-        # x_reshaped = self.x.reshape(n*d, 1, h, w);
-        self.x_col = im2col(self.x, f_size = self.f_size, padding = self.padding, stride = self.stride);
-        self.z_col = [];
-        for b in range(n):
-            self.z_col.append(self.filters @ self.x_col[b]);
-        self.z_col = np.array(self.z_col);
-        self.z = col2im(self.z_col, output_h, output_w);
+        self.x_col = im2col(self.x, filter_h = self.f_size, filter_w = self.f_size, 
+                          padding = self.padding, stride = self.stride);
+        # self.x_col.shape: (fh*fw*fd, positions)
+        # self.filters.shape: (k_filters, fh*fw*d)
+        self.z = self.filters @ self.x_col;
+        # self.z.shape: (k_filters, positions)
+        out_h = int((H + 2 * self.padding - self.f_size) / self.stride + 1);
+        out_w = int((W + 2 * self.padding - self.f_size) / self.stride + 1);
+        self.z = self.z.reshape(self.k_filters, out_h, out_w, N); # ...
+        self.z = self.z.transpose(3, 0, 1, 2);
+        # self.z.shape: (N, k_filters, out_h, out_w)
         return self.z;
     def backward(self, dz, ):
-        # dz: n * k * h * w
-        self.dz = dz;
-        n, k, h, w = self.dz.shape;
-        output_h = (h-1) * self.stride + self.f_size - 2*self.padding;
-        output_w = (w-1) * self.stride + self.f_size - 2*self.padding;
-        dz_reshaped = self.dz.reshape(n*k, 1, h, w);
-        self.dz_col = im2col(dz_reshaped, f_size = self.f_size, padding = self.padding, stride = self.stride);
-        self.dx = np.zeros(self.x.shape);
-        self.dx_col = im2col(self.dx, f_size = self.f_size, padding = self.padding, stride = self.stride);
-        """ caclulate df """
-        for l in range(n*k):
-            for i in range(h*w):
-                self.df[l%k,:] += (self.dz_col[l,:,i] * self.x_col[int(l/k),:,i]);
-        """ caclulate dx """
-        print("self.x.shape", self.x.shape)
-        print("self.dx_col.shape", self.dx_col.shape)
-        print("self.dz_col.shape", self.dz_col.shape)
-        print("self.filters.shape", self.filters.shape)
-        for l in range(n*k):
-            for i in range(h*w):
-                self.dx_col[int(l/k),:,i] += self.dz_col[l,:,i] * self.filters[l%k,:];
-                pass;
-        self.dx = col2im(self.dx_col, output_h, output_w);
-
-        # for b in range(n):
-        #     for l in range(k):
-        #         for i in range(h):
-        #             for j in range(w):
-        #                 self.dx[b, ] += self.dz[b][l][i][j] 
-        # self.dx = np.dot(self.filters.reshape(1,-1), self.dz_col).reshape(self.x.shape);
-
-        # self.df = []
-        # for i in range(n):
-        #     print(self.dz[i].reshape(self.k_filters, h*w));
-        #     print(self.x_col[i].T);
-        #     self.df.append(np.dot(self.dz[i].reshape(self.k_filters, h*w), self.x_col[i].T));
-        # self.df = np.array(self.df);
-        # # print(self.filters.shape)
-        # # print(self.df.shape)
-        # self.db = dz;
+        # dz.shape: (N, k_filters, out_h, out_w)
+        dz_reshaped = dz.transpose(1, 2, 3, 0).reshape(self.k_filters, -1);
+        self.df = dz_reshaped @ self.x_col.T;
+        self.df = self.df.reshape(self.filters.shape);
+        self.dx_col = self.filters.T @ dz_reshaped;
+        self.dx = col2im(self.dx_col, self.x.shape, 
+                         filter_h = self.f_size, filter_w = self.f_size, 
+                         padding = self.padding, stride = self.stride);
         return self.dx;
     def update(self, learning_rate, ):
-        self.filters += -learning_rate * self.df;
-        self.df = 0;
+        pass;
 
 class pooling_layer:
-    def __init__(self, size, stride, ):
+    def __init__(self, size, padding, stride, ):
         self.size = size;
+        self.padding = padding;
         self.stride = stride;
-        self.max_idx = [];
     def forward(self, x, ):
-        self.z = [];
-        d, h, w = x.shape;
-
-
+        self.x = x;
+        N, C, H, W = self.x.shape;
+        out_h = int((H + 2 * self.padding - self.size) / self.stride + 1);
+        out_w = int((W + 2 * self.padding - self.size) / self.stride + 1);
+        x_reshaped = x.reshape(N*C, 1, H, W);
+        self.x_col = im2col(x_reshaped, filter_h = self.size, filter_w = self.size, 
+                                   padding = self.padding, stride = self.stride);
+        # self.x_col.shape: (fh*hw*d, positions)
+        self.max_idx = np.argmax(self.x_col, axis=0);
+        self.z = self.x_col[self.max_idx, range(self.max_idx.size)];
+        self.z = self.z.reshape(out_h, out_w, N, C);
+        self.z = self.z.transpose(2, 3, 0, 1)
         return self.z;
+    def backward(self, dz, ):
+        N, C, H, W = self.x.shape
+        dx_col = np.zeros_like(self.x_col);
+        dz = dz.transpose(2, 3, 0, 1); # ...
+        dz_flat = dz.ravel();
+        print(dx_col[self.max_idx, range(self.max_idx.size)]);
+        print(dz_flat);
+        dx_col[self.max_idx, range(self.max_idx.size)] = dz_flat;
+        self.dx = col2im(dx_col, (N*C, 1, H, W), 
+                         filter_h = self.size, filter_w = self.size, 
+                         padding = self.padding, stride = self.stride);
+        self.dx = self.dx.reshape(self.x.shape);
+        return self.dx;
+    def update(self, learning_rate):
+        pass;
 
 
 class fc_layer:
@@ -153,20 +146,11 @@ class fc_layer:
     def init_bias(self):
         self.b = 0.01 * np.random.randn(self.output_size, 1);
     def forward(self, x, ):
-        self.x = x;
-        # print(self.w.shape, self.x.shape);
-        self.z = self.w @ self.x + self.b;
-        return self.z;
+        pass;
     def backward(self, dz, ):
-        self.dw += dz @ self.x.T;
-        self.db += dz;
-        self.dx = self.w.T @ dz;
-        return self.dx;
+        pass;
     def update(self, learning_rate, ):
-        self.w += -learning_rate * self.dw;
-        self.b += -learning_rate * 0.1 * self.db;
-        self.dw = 0;
-        self.db = 0;
+        pass;
 
 class ReLU:
     def __init__(self, ):

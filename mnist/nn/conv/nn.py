@@ -148,6 +148,15 @@ class pooling_layer:
         self.dx = self.dx.reshape(self.x.shape);
         return self.dx;
 
+class bn_layer:
+    def __init__(self, ):
+        pass;
+    def forward(self, x, ):
+        pass;
+    def backward(self, dz, ):
+        pass;
+    def update(self, learning_rate, ):
+        pass;
 
 class fc_layer:
     def __init__(self, input_size, output_size):
@@ -214,26 +223,7 @@ def decay_schedule(length, name):
     elif(name == "constant"):
         return np.ones(length);
     elif(name == "exponential"):
-        return 0.95 ** (i);
-
-def sample_batches(training_set, batch_size):
-    X, Y, x, y = [], [], [], [];
-    cnt = 0;
-    for elem in training_set:
-        label, imginfo = elem;
-        x.append(imginfo);
-        y.append(label);
-        cnt += 1;
-        if(cnt == batch_size):
-            X.append(np.array(x));
-            Y.append(np.array(y));
-            cnt = 0;
-            x = [];
-            y = [];
-    if(cnt > 0):
-        X.append(np.array(x));
-        Y.append(np.array(y));
-    return X, Y;
+        return 0.8 ** (i);
 
 def init_model():
     model = {};

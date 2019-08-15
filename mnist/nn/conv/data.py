@@ -38,7 +38,7 @@ def load_testing_set():
             imginfo = [];
             for i in range(0, len(data)):
                 imginfo.append(int(data[i].strip()));
-            imginfo = np.array(imginfo).reshape(28, 28);
+            imginfo = np.array(imginfo).reshape(1, 28, 28);
             imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append(imginfo);
             if(len(ret) % 1000 == 0):
@@ -61,6 +61,25 @@ def preprocess_training_set():
     random.shuffle(training_set);
     return training_set;
 
+def sample_batches_train(training_set, batch_size):
+    X, Y, x, y = [], [], [], [];
+    cnt = 0;
+    for elem in training_set:
+        label, imginfo = elem;
+        x.append(imginfo);
+        y.append(label);
+        cnt += 1;
+        if(cnt == batch_size):
+            X.append(np.array(x));
+            Y.append(np.array(y));
+            cnt = 0;
+            x = [];
+            y = [];
+    if(cnt > 0):
+        X.append(np.array(x));
+        Y.append(np.array(y));
+    return X, Y;
+
 def preprocess_testing_set():
     dmp_path = os.path.join("dmp", "test.pickle");
     if(not os.path.exists("dmp")):
@@ -75,6 +94,20 @@ def preprocess_testing_set():
             testing_set = pickle.load(f);
     # random.shuffle(testing_set);
     return testing_set;
+
+def sample_batches_test(testing_set, batch_size):
+    X, x = [], [];
+    cnt = 0;
+    for elem in testing_set:
+        x.append(elem);
+        cnt += 1;
+        if(cnt == batch_size):
+            X.append(np.array(x));
+            cnt = 0;
+            x = [];
+    if(cnt > 0):
+        X.append(np.array(x));
+    return X;
 
 def save_model(model, opath = None):
     if(opath == None):

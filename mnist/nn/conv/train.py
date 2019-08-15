@@ -13,8 +13,8 @@ import warnings
 warnings.filterwarnings("error")
 
 @click.command()
-@click.option("--epoch", type = int, default = 10, 
-              help = "Specifies number of epoches, 10 by default")
+@click.option("--epoch", type = int, default = 30, 
+              help = "Specifies number of epoches, 30 by default")
 @click.option("--rate", type = float, default = 2e-4, 
               help = "Specifies value of initial learning rate, 2e-4 by default")
 @click.option("--reg", type = float, default = 1e-3,

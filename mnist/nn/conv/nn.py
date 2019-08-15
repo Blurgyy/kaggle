@@ -199,15 +199,23 @@ class fc_layer:
 
 class ReLU:
     def __init__(self, ):
-        self.p = 0.5; # dropout ratio
-    def forward(self, x, is_test_time):
-        # if is_test_time == True, disable dropout
-        self.relu_mask = (x > 0.01);
+        pass; # nothing to do
+    def forward(self, x):
+        self.mask = (x > 0.01);
+        self.z = x * self.mask;
+        return self.z;
+    def backward(self, dz, ):
+        self.dx = dz * self.mask;
+        return self.dx;
+
+class dropout_layer:
+    def __init__(self, p = 0.5, ):
+        self.p = p; # dropout ratio
+    def forward(self, x, is_test_time, ):
         if(is_test_time):
-            self.dropout_mask = self.p;
+            self.mask = self.p;
         else:
-            self.dropout_mask = (np.random.rand(*x.shape) < self.p);
-        self.mask = self.relu_mask * self.dropout_mask;
+            self.mask = (np.random.rand(*x.shape) < self.p);
         self.z = x * self.mask;
         return self.z;
     def backward(self, dz, ):
@@ -229,15 +237,16 @@ def decay_schedule(length, name):
 
 def init_model(reg):
     """
-    conv -> relu -> pool -> 
-    -> [conv -> relu]*2 -> pool -> 
-    -> fc6 -> relu -> fc7 -> output
+    conv -> relu -> dropout -> pool -> 
+    -> [conv -> relu]*2 -> dropout -> pool -> 
+    -> fc6 -> relu -> dropout -> fc7 -> output
     """
     model = {};
     model['conv1'] = conv_layer(k_filters = 4,
                                 f_size = 3, f_depth = 1,
                                 padding = 1, stride = 1);
     model['relu1'] = ReLU();
+    model['drop1'] = dropout_layer(0.5);
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['conv2'] = conv_layer(k_filters = 16,
                                 f_size = 3, f_depth = 4,
@@ -247,31 +256,37 @@ def init_model(reg):
                                 f_size = 3, f_depth = 16,
                                 padding = 1, stride = 1);
     model['relu3'] = ReLU();
+    model['drop3'] = dropout_layer(0.5);
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['fc6'] = fc_layer(input_size = 784, output_size = 200, reg = reg);
     model['relu4'] = ReLU();
+    model['drop4'] = dropout_layer(0.5);
     model['fc7'] = fc_layer(input_size = 200, output_size = 10, reg = reg);
     model['output'] = None;
     return model;
 
 def forward(model, x, is_test_time):
     x = model['conv1'].forward(x);
-    x = model['relu1'].forward(x, is_test_time);
+    x = model['relu1'].forward(x);
+    x = model['drop1'].forward(x, is_test_time);
     x = model['pooling1'].forward(x);
     x = model['conv2'].forward(x);
-    x = model['relu2'].forward(x, is_test_time);
+    x = model['relu2'].forward(x);
     x = model['conv3'].forward(x);
-    x = model['relu3'].forward(x, is_test_time);
+    x = model['relu3'].forward(x);
+    x = model['drop3'].forward(x, is_test_time)
     x = model['pooling2'].forward(x);
     N, C, H, W = x.shape;
     x = x.reshape(N, -1, 1);
     x = model['fc6'].forward(x);
-    x = model['relu4'].forward(x, is_test_time);
+    x = model['relu4'].forward(x);
+    x = model['drop4'].forward(x, is_test_time);
     model['output'] = model['fc7'].forward(x);
     return model['output'];
 
 def backward(model, dz):
     dz = model['fc7'].backward(dz);
+    dz = model['drop4'].backward(dz);
     dz = model['relu4'].backward(dz);
     dz = model['fc6'].backward(dz);
     # N, C, H, W = model['pooling2'].z.shape;
@@ -279,11 +294,13 @@ def backward(model, dz):
     dz = dz.reshape(model['pooling2'].z.shape);
 
     dz = model['pooling2'].backward(dz);
+    dz = model['drop3'].backward(dz);
     dz = model['relu3'].backward(dz);
     dz = model['conv3'].backward(dz);
     dz = model['relu2'].backward(dz);
     dz = model['conv2'].backward(dz);
     dz = model['pooling1'].backward(dz);
+    dz = model['drop1'].backward(dz);
     dz = model['relu1'].backward(dz);
     model['conv1'].backward(dz);
 

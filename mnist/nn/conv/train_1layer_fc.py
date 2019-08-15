@@ -14,7 +14,7 @@ warnings.filterwarnings("error")
 
 def fc_model(input_size, output_size):
     model = {};
-    model['fc1'] = nn.fc_layer(input_size, output_size);
+    model['fc1'] = nn.fc_layer(input_size, output_size, 1e-3);
     model['output'] = None;
     return model;
 
@@ -36,7 +36,7 @@ def main():
     train = data.preprocess_training_set();
     for ep in range(epoch):
         yes, cnt = 0, 0;
-        X, Y = nn.sample_batches(train, batch_size);
+        X, Y = data.sample_batches_train(train, batch_size);
         for i in range(len(X)):
             x, y = X[i].reshape(batch_size, 784, 1), Y[i];
             forward(model, x);

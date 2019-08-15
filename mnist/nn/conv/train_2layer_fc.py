@@ -14,19 +14,22 @@ warnings.filterwarnings("error")
 
 def fc_model(input_size, h1_size, output_size):
     model = {};
-    model['fc1'] = nn.fc_layer(input_size, h1_size);
+    model['fc1'] = nn.fc_layer(input_size, h1_size, 1e-3);
     model['relu'] = nn.ReLU();
-    model['fc2'] = nn.fc_layer(h1_size, output_size);
+    model['drop'] = nn.dropout_layer(0.5);
+    model['fc2'] = nn.fc_layer(h1_size, output_size, 1e-3);
     model['output'] = None;
     return model;
 
 def forward(model, x):
     x = model['fc1'].forward(x);
-    x = model['relu'].forward(x, False);
+    x = model['relu'].forward(x);
+    x = model['drop'].forward(x, False)
     model['output'] = model['fc2'].forward(x);
 
 def backward(model, dz):
     dz = model['fc2'].backward(dz);
+    dz = model['drop'].backward(dz);
     dz = model['relu'].backward(dz);
     model['fc1'].backward(dz);
 
@@ -43,7 +46,7 @@ def main():
     train = data.preprocess_training_set();
     for ep in range(epoch):
         yes, cnt = 0, 0;
-        X, Y = nn.sample_batches(train, batch_size);
+        X, Y = data.sample_batches_train(train, batch_size);
         for i in range(len(X)):
             x, y = X[i].reshape(batch_size, 784, 1), Y[i];
             forward(model, x);

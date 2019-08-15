@@ -2,6 +2,25 @@
 # -*- coding: utf-8 -*-
 __author__ = "Blurgy";
 
+"""
+functions:
+    get_im2col_indices 
+    im2col 
+    col2im 
+    decay_schedule 
+    sample_batches 
+    init_model 
+    forward 
+    backward 
+    update 
+
+classes:
+    conv_layer 
+    pooling_layer 
+    fc_layer 
+    ReLU 
+"""
+
 import numpy as np
 
 def get_im2col_indices(x_shape, filter_h, filter_w, padding, stride):
@@ -137,18 +156,29 @@ class fc_layer:
         self.output_size = output_size;
         self.init_weights();
         self.init_bias();
-
-        self.dw = 0;
-        self.dx = 0;
-        self.db = 0;
     def init_weights(self, ):
         self.w = 0.01 * np.random.randn(self.output_size, self.input_size);
     def init_bias(self):
         self.b = 0.01 * np.random.randn(self.output_size, 1);
     def forward(self, x, ):
-        pass;
+        self.x = x;
+        N, H, W = self.x.shape;
+        assert W == 1
+        x_reshaped = self.x.transpose(2, 1, 0).reshape(self.input_size, N);
+        self.z = self.w @ x_reshaped + self.b;
+        self.z = self.z.T.reshape(N, self.output_size, 1);
+        return self.z;
     def backward(self, dz, ):
-        pass;
+        N, H, W = self.x.shape;
+        assert W == 1
+        self.db = np.sum(dz, axis=(0, 2));
+        self.db = self.db.reshape(self.output_size, -1)
+        dz_reshaped = dz.transpose(2, 1, 0).reshape(self.output_size, N);
+        x_reshaped = self.x.transpose(2, 0, 1).reshape(N, self.input_size);
+        self.dw = dz_reshaped @ x_reshaped;
+        self.dx = self.w.T @ dz_reshaped;
+        self.dx = self.dx.T.reshape(N, self.input_size, 1);
+        return self.dx;
     def update(self, learning_rate, ):
         pass;
 

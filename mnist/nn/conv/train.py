@@ -35,25 +35,30 @@ def main(epoch, rate, decay, continue_at, batch_size):
 
     for ep in range(epoch):
         lr = learning_rate[ep];
+        print("epoch: %d/%d, batch size: %d, learning rate: %g" % (ep+1, epoch, batch_size, lr))
         train = data.preprocess_training_set();
         print("training set loaded and shuffled");
-        X, Y = nn.sample_batches(train, batch_size);
-        yes, cnt = 0, 0;
+        X, Y = data.sample_batches_train(train, batch_size);
+
+        yes, cnt, epoch_loss = 0, 0, 0;
         for i in range(len(X)):
             x, y = X[i], Y[i];
             nn.forward(model, x, is_test_time = False);
             dz, loss = nn.grad(model, y);
+            epoch_loss += loss;
             nn.backward(model, dz);
 
             prediction = np.argmax(model['output'], axis=1);
             score = prediction.reshape(-1,1) == y.reshape(-1,1)
             yes += np.sum(score);
             cnt += len(y);
-            print("[%d/%d]: %.2f%%, batch loss = %.2f" % (yes, cnt, yes / cnt * 100, loss), end = '\r');
+            print("[%d/%d]: %.2f%%, batch loss: %.2f" % (yes, cnt, yes / cnt * 100, loss), end = '\r');
             nn.update(model, lr);
             # input();
+        print();
+        print("epoch %d/%d overall loss: %.2f" % (ep+1, epoch, epoch_loss));
         data.save_model(model);
-        print("\nmodel saved\n");
+        print("model saved\n");
 
 if(__name__ == "__main__"):
     main();

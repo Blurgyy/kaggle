@@ -15,15 +15,15 @@ warnings.filterwarnings("error")
 @click.command()
 @click.option("--epoch", type = int, default = 10, 
               help = "Specifies number of epoches, 10 by default")
-@click.option("--rate", type = float, default = 1e-5, 
-              help = "Specifies value of initial learning rate, 1e-5 by default")
+@click.option("--rate", type = float, default = 2e-4, 
+              help = "Specifies value of initial learning rate, 2e-4 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-@click.option("--batch-size", type = int, default = 10,
-              help = "Specifies batch size, 10 by default")
+@click.option("--batch-size", type = int, default = 64,
+              help = "Specifies batch size, 64 by default")
 def main(epoch, rate, decay, continue_at, batch_size):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
@@ -33,13 +33,12 @@ def main(epoch, rate, decay, continue_at, batch_size):
     else:
         model = nn.init_model();
 
-    yes = 0;
-    cnt = 0;
     for ep in range(epoch):
         lr = learning_rate[ep];
         train = data.preprocess_training_set();
         print("training set loaded and shuffled");
         X, Y = nn.sample_batches(train, batch_size);
+        yes, cnt = 0, 0;
         for i in range(len(X)):
             x, y = X[i], Y[i];
             nn.forward(model, x, is_test_time = False);
@@ -50,35 +49,11 @@ def main(epoch, rate, decay, continue_at, batch_size):
             score = prediction.reshape(-1,1) == y.reshape(-1,1)
             yes += np.sum(score);
             cnt += len(y);
-            if(cnt % batch_size == 0):
-                print("[%d/%d]: %.2f%%, loss = %.2f" % (yes, cnt, yes / cnt * 100, loss), end = '\r');
+            print("[%d/%d]: %.2f%%, batch loss = %.2f" % (yes, cnt, yes / cnt * 100, loss), end = '\r');
             nn.update(model, lr);
             # input();
-
-        # batches = nn.sample_batches(train, batch_size);
-        # for batch in batches:
-        #     for elem in batch:
-        #         label, img = elem;
-        #         img = img.reshape(1, 28, 28);
-        #         nn.forward(model, img, is_test_time = False);
-        #         prob = model['output'].copy();
-        #         prob -= np.max(prob);
-        #         prob = np.exp(prob) / np.sum(np.exp(prob));
-        #         dz = prob.copy();
-        #         dz[label] -= 1;
-        #         # print(dz);
-        #         loss += -np.log(prob[label]);
-        #         nn.backward(model, dz);
-
-        #         pred = np.argmax(model['output']);
-        #         yes += (pred == label);
-        #         cnt += 1;
-        #         if(cnt % 1 == 0):
-        #             print("[%d/%d]: %0.2f%%" % (yes, cnt, yes / cnt * 100), end = '\r');
-        #     nn.update(model, lr/batch_size);
-        #     data.save_model(model);
-        #     print("\nupdated, loss = %g" % (loss));
-        #     loss = 0;
+        data.save_model(model);
+        print("\nmodel saved\n");
 
 if(__name__ == "__main__"):
     main();

@@ -12,6 +12,7 @@ functions:
     init_model 
     forward 
     backward 
+    grad 
     update 
 
 classes:
@@ -81,7 +82,7 @@ class conv_layer:
         self.init_filters();
         self.init_bias();
     def init_filters(self, ):
-        self.filters = 0.01 * np.random.randn(self.k_filters, self.f_depth*self.f_size*self.f_size);
+        self.filters = np.random.randn(self.k_filters, self.f_depth*self.f_size*self.f_size) / np.sqrt(self.f_size*self.f_size*self.f_depth);
     def init_bias(self, ):
         self.b = 0.01 * np.random.randn(self.k_filters, 1);
     def forward(self, x, ):
@@ -102,7 +103,7 @@ class conv_layer:
     def backward(self, dz, ):
         # dz.shape: (N, k_filters, out_h, out_w)
         self.db = np.sum(dz, axis=(0, 2, 3));
-        # self.db.reshape(self.k_filters, 1);
+        # self.db.shape: (self.k_filters, 1);
         dz_reshaped = dz.transpose(1, 2, 3, 0).reshape(self.k_filters, -1);
         self.df = dz_reshaped @ self.x_col.T;
         self.df = self.df.reshape(self.filters.shape);
@@ -140,16 +141,12 @@ class pooling_layer:
         dx_col = np.zeros_like(self.x_col);
         dz = dz.transpose(2, 3, 0, 1); # ...
         dz_flat = dz.ravel();
-        # print(dx_col[self.max_idx, range(self.max_idx.size)]);
-        # print(dz_flat);
         dx_col[self.max_idx, range(self.max_idx.size)] = dz_flat;
         self.dx = col2im(dx_col, (N*C, 1, H, W), 
                          filter_h = self.size, filter_w = self.size, 
                          padding = self.padding, stride = self.stride);
         self.dx = self.dx.reshape(self.x.shape);
         return self.dx;
-    # def update(self, learning_rate):
-    #     pass;
 
 
 class fc_layer:
@@ -159,9 +156,9 @@ class fc_layer:
         self.init_weights();
         self.init_bias();
     def init_weights(self, ):
-        self.w = 0.001 * np.random.randn(self.output_size, self.input_size);
+        self.w = np.random.randn(self.output_size, self.input_size) / np.sqrt(self.input_size/2);
     def init_bias(self):
-        self.b = 0.001 * np.random.randn(self.output_size, 1);
+        self.b = np.random.randn(self.output_size, 1) / np.sqrt(self.input_size);
     def forward(self, x, ):
         self.x = x;
         N = self.x.shape[0];
@@ -182,29 +179,12 @@ class fc_layer:
         dz_reshaped = dz.transpose(2, 1, 0).reshape(self.output_size, N);
         x_reshaped = self.x.transpose(2, 0, 1).reshape(N, self.input_size);
         self.dw = dz_reshaped @ x_reshaped;
-        # tmp_show(x_reshaped)
-        # print("dz:", dz_reshaped);
-        # print("dw", self.dw, self.dw.shape);
         self.dx = self.w.T @ dz_reshaped;
         self.dx = self.dx.T.reshape(N, self.input_size, 1);
         return self.dx;
     def update(self, learning_rate, ):
-        # print("original: max =", np.max(self.w));
-        # print("updating: max =", np.max(self.dw));
         self.w += -learning_rate * self.dw;
         self.b += -learning_rate * self.db;
-        # print("updated: max =", np.max(self.w));
-
-def tmp_show(x):
-    h = 28
-    w = 28
-    x = x.ravel()
-    for i in range(h):
-        for j in range(w):
-            idx = i*h+j
-            # print(" " if x[idx] > 128 else "*", end = "")
-            print("%03d" % x[idx], end = " ")
-        print();
 
 class ReLU:
     def __init__(self, ):
@@ -292,8 +272,9 @@ def backward(model, dz):
     dz = model['relu3'].backward(dz);
     dz = model['fc6'].backward(dz);
 
-    N, C, H, W = model['pooling2'].z.shape;
-    dz = dz.reshape(N, C, H, W);
+    # N, C, H, W = model['pooling2'].z.shape;
+    # dz = dz.reshape(N, C, H, W);
+    dz = dz.reshape(model['pooling2'].z.shape);
     dz = model['pooling2'].backward(dz);
     dz = model['relu2'].backward(dz);
     dz = model['conv2'].backward(dz);

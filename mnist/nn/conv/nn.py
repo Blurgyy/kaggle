@@ -159,9 +159,10 @@ class bn_layer:
         pass;
 
 class fc_layer:
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size, output_size, reg, ):
         self.input_size = input_size;
         self.output_size = output_size;
+        self.reg = reg;
         self.init_weights();
         self.init_bias();
     def init_weights(self, ):
@@ -192,6 +193,7 @@ class fc_layer:
         self.dx = self.dx.T.reshape(N, self.input_size, 1);
         return self.dx;
     def update(self, learning_rate, ):
+        self.w += -self.reg * learning_rate * self.w;
         self.w += -learning_rate * self.dw;
         self.b += -learning_rate * self.db;
 
@@ -225,7 +227,7 @@ def decay_schedule(length, name):
     elif(name == "exponential"):
         return 0.8 ** (i);
 
-def init_model():
+def init_model(reg):
     model = {};
     model['conv1'] = conv_layer(k_filters = 4,
                                 f_size = 3, f_depth = 1,
@@ -237,9 +239,9 @@ def init_model():
                                 padding = 1, stride = 1);
     model['relu2'] = ReLU();
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['fc6'] = fc_layer(input_size = 784, output_size = 200);
+    model['fc6'] = fc_layer(input_size = 784, output_size = 200, reg = reg);
     model['relu3'] = ReLU();
-    model['fc7'] = fc_layer(input_size = 200, output_size = 10);
+    model['fc7'] = fc_layer(input_size = 200, output_size = 10, reg = reg);
     model['output'] = None;
     return model;
 

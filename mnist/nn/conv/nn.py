@@ -228,6 +228,11 @@ def decay_schedule(length, name):
         return 0.8 ** (i);
 
 def init_model(reg):
+    """
+    conv -> relu -> pool -> 
+    -> [conv -> relu]*2 -> pool -> 
+    -> fc6 -> relu -> fc7 -> output
+    """
     model = {};
     model['conv1'] = conv_layer(k_filters = 4,
                                 f_size = 3, f_depth = 1,
@@ -238,9 +243,13 @@ def init_model(reg):
                                 f_size = 3, f_depth = 4,
                                 padding = 1, stride = 1);
     model['relu2'] = ReLU();
+    model['conv3'] = conv_layer(k_filters = 16,
+                                f_size = 3, f_depth = 16,
+                                padding = 1, stride = 1);
+    model['relu3'] = ReLU();
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['fc6'] = fc_layer(input_size = 784, output_size = 200, reg = reg);
-    model['relu3'] = ReLU();
+    model['relu4'] = ReLU();
     model['fc7'] = fc_layer(input_size = 200, output_size = 10, reg = reg);
     model['output'] = None;
     return model;
@@ -251,23 +260,27 @@ def forward(model, x, is_test_time):
     x = model['pooling1'].forward(x);
     x = model['conv2'].forward(x);
     x = model['relu2'].forward(x, is_test_time);
+    x = model['conv3'].forward(x);
+    x = model['relu3'].forward(x, is_test_time);
     x = model['pooling2'].forward(x);
     N, C, H, W = x.shape;
     x = x.reshape(N, -1, 1);
     x = model['fc6'].forward(x);
-    x = model['relu3'].forward(x, is_test_time);
+    x = model['relu4'].forward(x, is_test_time);
     model['output'] = model['fc7'].forward(x);
     return model['output'];
 
 def backward(model, dz):
     dz = model['fc7'].backward(dz);
-    dz = model['relu3'].backward(dz);
+    dz = model['relu4'].backward(dz);
     dz = model['fc6'].backward(dz);
-
     # N, C, H, W = model['pooling2'].z.shape;
     # dz = dz.reshape(N, C, H, W);
     dz = dz.reshape(model['pooling2'].z.shape);
+
     dz = model['pooling2'].backward(dz);
+    dz = model['relu3'].backward(dz);
+    dz = model['conv3'].backward(dz);
     dz = model['relu2'].backward(dz);
     dz = model['conv2'].backward(dz);
     dz = model['pooling1'].backward(dz);

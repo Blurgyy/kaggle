@@ -71,8 +71,8 @@ def decay_schedule(length, name):
 
 def init_model(reg):
     """
-    conv -> relu -> dropout -> pool -> 
-    -> [conv -> relu]*2 -> dropout -> pool -> 
+    [conv -> relu]*2 -> dropout -> pool -> 
+    -> conv -> relu -> dropout -> pool -> 
     -> fc6 -> relu -> dropout -> fc7 -> output
     """
     model = {};
@@ -84,6 +84,7 @@ def init_model(reg):
                                 f_size = 3, f_depth = 4,
                                 padding = 1, stride = 1);
     model['relu2'] = ReLU();
+    model['drop2'] = dropout_layer(0.5);
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['conv3'] = conv_layer(k_filters = 16,
                                 f_size = 3, f_depth = 16,
@@ -103,6 +104,7 @@ def forward(model, x, is_test_time):
     x = model['relu1'].forward(x);
     x = model['conv2'].forward(x);
     x = model['relu2'].forward(x);
+    x = model['drop2'].forward(x, is_test_time);
     x = model['pooling1'].forward(x);
     x = model['conv3'].forward(x);
     x = model['relu3'].forward(x);
@@ -130,6 +132,7 @@ def backward(model, dz):
     dz = model['relu3'].backward(dz);
     dz = model['conv3'].backward(dz);
     dz = model['pooling1'].backward(dz);
+    dz = model['drop2'].backward(dz);
     dz = model['relu2'].backward(dz);
     dz = model['conv2'].backward(dz);
     dz = model['relu1'].backward(dz);

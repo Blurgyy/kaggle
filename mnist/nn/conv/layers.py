@@ -57,8 +57,9 @@ class conv_layer:
         return self.dx;
     def update(self, learning_rate, ):
         assert self.b.size == self.db.size
-        self.b += -learning_rate * self.db.reshape(self.k_filters, 1);
-        self.filters += -learning_rate * self.df;
+        N = self.x.shape[0];
+        self.b += -learning_rate * self.db.reshape(self.k_filters, 1) / N;
+        self.filters += -learning_rate * self.df / N;
 
 class pooling_layer:
     def __init__(self, size, padding, stride, ):
@@ -137,9 +138,10 @@ class fc_layer:
         self.dx = self.dx.T.reshape(N, self.input_size, 1);
         return self.dx;
     def update(self, learning_rate, ):
+        N = self.x.shape[0];
         self.w += -self.reg * learning_rate * self.w;
-        self.w += -learning_rate * self.dw;
-        self.b += -learning_rate * self.db;
+        self.w += -learning_rate * self.dw / N;
+        self.b += -learning_rate * self.db / N;
 
 class ReLU:
     def __init__(self, ):

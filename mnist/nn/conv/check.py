@@ -13,7 +13,7 @@ def main(continue_at):
     epoch = 1000;
     batch_size = 10;
     train_size = 20
-    learning_rate = 1e-4;
+    learning_rate = 1e-3;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:

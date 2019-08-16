@@ -3,7 +3,7 @@
 __author__ = "Blurgy";
 
 import data 
-import nn 
+import nn_utils as nn 
 import os 
 import sys 
 import numpy as np 
@@ -19,7 +19,7 @@ def main(model_dump_file):
     fpath = os.path.join("submit", "submit.csv");
     with open(fpath, 'w') as f:
         f.write("ImageId,Label");
-        X = data.sample_batches_test(test, 64);
+        X = data.sample_batches_test(test, 32);
         cnt = 0;
         for x in X:
             nn.forward(model, x, is_test_time = True);

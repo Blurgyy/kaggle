@@ -109,11 +109,8 @@ def sample_batches_test(testing_set, batch_size):
         X.append(np.array(x));
     return X;
 
-def save_model(model, opath = None):
-    if(opath == None):
-        model_dmp_path = os.path.join("dmp", "model.pickle");
-    else:
-        model_dmp_path = opath;
+def save_model(model):
+    model_dmp_path = os.path.join("dmp", "model.pickle");
     if(not os.path.exists("dmp")):
         os.makedirs("dmp");
     with open(model_dmp_path, 'wb') as f:

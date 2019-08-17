@@ -26,8 +26,10 @@ class conv_layer:
         self.init_bias();
     def init_filters(self, ):
         self.filters = np.random.randn(self.k_filters, self.f_depth*self.f_size*self.f_size) / np.sqrt(self.f_size*self.f_size*self.f_depth);
+        self.f_v = 0;
     def init_bias(self, ):
         self.b = 0.01 * np.random.randn(self.k_filters, 1);
+        self.b_v = 0;
     def forward(self, x, ):
         self.x = x;
         N, C, H, W = self.x.shape
@@ -58,8 +60,13 @@ class conv_layer:
     def update(self, learning_rate, ):
         assert self.b.size == self.db.size
         N = self.x.shape[0];
-        self.b += -learning_rate * self.db.reshape(self.k_filters, 1) / N;
-        self.filters += -learning_rate * self.df / N;
+        mu = 0.5;
+        self.db = self.db.reshape(self.k_filters, 1) / N;
+        self.df = self.df / N;
+        self.b_v = mu * self.b_v - learning_rate * self.db;
+        self.f_v = mu * self.f_v - learning_rate * self.df;
+        self.b += self.b_v;
+        self.filters += self.f_v;
 
 class pooling_layer:
     def __init__(self, size, padding, stride, ):
@@ -74,7 +81,7 @@ class pooling_layer:
         x_reshaped = x.reshape(N*C, 1, H, W);
         self.x_col = nn.im2col(x_reshaped, filter_h = self.size, filter_w = self.size, 
                                    padding = self.padding, stride = self.stride);
-        # self.x_col.shape: (fh*hw*d, positions)
+        # self.x_col.shape: (fh*fw*d, positions)
         self.max_idx = np.argmax(self.x_col, axis=0);
         self.z = self.x_col[self.max_idx, range(self.max_idx.size)];
         self.z = self.z.reshape(out_h, out_w, N, C);
@@ -111,8 +118,10 @@ class fc_layer:
         self.init_bias();
     def init_weights(self, ):
         self.w = np.random.randn(self.output_size, self.input_size) / np.sqrt(self.input_size/2);
+        self.w_v = 0;
     def init_bias(self):
         self.b = np.random.randn(self.output_size, 1) / np.sqrt(self.input_size);
+        self.b_v = 0;
     def forward(self, x, ):
         self.x = x;
         N = self.x.shape[0];
@@ -139,9 +148,14 @@ class fc_layer:
         return self.dx;
     def update(self, learning_rate, ):
         N = self.x.shape[0];
+        mu = 0.5;
+        self.dw = self.dw / N;
+        self.db = self.db / N;
         self.w += -self.reg * learning_rate * self.w;
-        self.w += -learning_rate * self.dw / N;
-        self.b += -learning_rate * self.db / N;
+        self.w_v = mu * self.w_v - learning_rate * self.dw;
+        self.b_v = mu * self.b_v - learning_rate * self.db;
+        self.w += self.w_v;
+        self.b += self.b_v;
 
 class ReLU:
     def __init__(self, ):

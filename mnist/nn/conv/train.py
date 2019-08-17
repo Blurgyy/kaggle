@@ -15,8 +15,8 @@ warnings.filterwarnings("error")
 @click.command()
 @click.option("--epoch", type = int, default = 30, 
               help = "Specifies number of epoches, 30 by default")
-@click.option("--rate", type = float, default = 6e-3, 
-              help = "Specifies value of initial learning rate, 6e-3 by default")
+@click.option("--rate", type = float, default = 8e-3, 
+              help = "Specifies value of initial learning rate, 8e-3 by default")
 @click.option("--reg", type = float, default = 1e-3,
               help = "Specifies value of [regularization strenth]/[learning rate], 1e-3 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
@@ -51,7 +51,7 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
             nn.backward(model, dz);
 
             prediction = np.argmax(model['output'], axis=1);
-            score = prediction.reshape(-1,1) == y.reshape(-1,1)
+            score = prediction.reshape(-1,1) == y.reshape(-1,1);
             yes += np.sum(score);
             cnt += len(y);
             print("[%d/%d]: %.2f%%, batch loss: %.2f    " % (yes, cnt, yes / cnt * 100, loss), end = '\r');

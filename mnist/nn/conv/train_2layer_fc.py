@@ -39,7 +39,7 @@ def update(model, lr):
 
 def main():
     epoch = 10000;
-    lr = 1e-4;
+    lr = 3e-3;
     batch_size = 20;
     model = fc_model(784, 200, 10);
 

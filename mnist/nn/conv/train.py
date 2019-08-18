@@ -37,10 +37,10 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
 
     for ep in range(epoch):
         lr = learning_rate[ep];
-        print("epoch %d/%d, batch size %d, learning rate %g" % (ep+1, epoch, batch_size, lr))
         train = data.preprocess_training_set();
         X, Y = data.sample_batches_train(train, batch_size);
         del train;
+        print("epoch %d/%d, batch size %d, learning rate %g" % (ep+1, epoch, batch_size, lr))
         print("training set loaded and shuffled");
 
         yes, cnt, epoch_loss = 0, 0, 0;

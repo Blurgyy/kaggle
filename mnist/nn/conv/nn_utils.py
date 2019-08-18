@@ -79,60 +79,67 @@ def init_model(reg):
     -> output
     """
     model = {};
-    model['conv1'] = conv_layer(k_filter = 4,
-                                f_size = 3, f_depth = 1,
-                                padding = 1, stride = 1);
-    model['bn1'] = bn_layer_conv(4);
+    model['conv1'] = bottleneck(k_filter = 16,
+                                f_size = 3, f_depth = 1);
+    model['bn1'] = bn_layer_conv(16);
     model['relu1'] = ReLU();
-    model['conv2'] = conv_layer(k_filter = 16,
-                                f_size = 3, f_depth = 4,
-                                padding = 1, stride = 1);
-    model['bn2'] = bn_layer_conv(16);
+    model['conv2'] = bottleneck(k_filter = 64,
+                                f_size = 3, f_depth = 16);
+    model['bn2'] = bn_layer_conv(64);
     model['relu2'] = ReLU();
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['conv3'] = conv_layer(k_filter = 16,
-                                f_size = 3, f_depth = 16,
-                                padding = 1, stride = 1);
-    model['bn3'] = bn_layer_conv(16);
+    model['conv3'] = bottleneck(k_filter = 64,
+                                f_size = 3, f_depth = 64);
+    model['bn3'] = bn_layer_conv(64);
     model['relu3'] = ReLU();
-    model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['fc6'] = fc_layer(input_size = 784, output_size = 200, reg = reg);
-    model['bn4'] = bn_layer_fc(200);
+    model['conv4'] = bottleneck(k_filter = 64,
+                                f_size = 3, f_depth = 64);
+    model['bn4'] = bn_layer_conv(64);
     model['relu4'] = ReLU();
-    model['fc7'] = fc_layer(input_size = 200, output_size = 10, reg = reg);
+    model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
+    model['fc6'] = fc_layer(input_size = 64*7*7, output_size = 512, reg = reg);
+    model['bn5'] = bn_layer_fc(512);
+    model['relu5'] = ReLU();
+    model['fc7'] = fc_layer(input_size = 512, output_size = 10, reg = reg);
     model['output'] = None;
     return model;
 
 def forward(model, x, is_test_time):
-    x = model['conv1'].forward(x);
+    x = model['conv1'].forward(x, is_test_time);
     x = model['bn1'].forward(x, is_test_time);
     x = model['relu1'].forward(x);
-    x = model['conv2'].forward(x);
+    x = model['conv2'].forward(x, is_test_time);
     x = model['bn2'].forward(x, is_test_time);
     x = model['relu2'].forward(x);
     x = model['pooling1'].forward(x);
-    x = model['conv3'].forward(x);
+    x = model['conv3'].forward(x, is_test_time);
     x = model['bn3'].forward(x, is_test_time);
     x = model['relu3'].forward(x);
+    x = model['conv4'].forward(x, is_test_time);
+    x = model['bn4'].forward(x, is_test_time);
+    x = model['relu4'].forward(x);
     x = model['pooling2'].forward(x);
     N, C, H, W = x.shape;
     x = x.reshape(N, -1, 1);
     x = model['fc6'].forward(x);
-    x = model['bn4'].forward(x, is_test_time);
-    x = model['relu4'].forward(x);
+    x = model['bn5'].forward(x, is_test_time);
+    x = model['relu5'].forward(x);
     model['output'] = model['fc7'].forward(x);
     return model['output'];
 
 def backward(model, dz):
     dz = model['fc7'].backward(dz);
-    dz = model['relu4'].backward(dz);
-    dz = model['bn4'].backward(dz);
+    dz = model['relu5'].backward(dz);
+    dz = model['bn5'].backward(dz);
     dz = model['fc6'].backward(dz);
     # N, C, H, W = model['pooling2'].z.shape;
     # dz = dz.reshape(N, C, H, W);
     dz = dz.reshape(model['pooling2'].z.shape);
 
     dz = model['pooling2'].backward(dz);
+    dz = model['relu4'].backward(dz);
+    dz = model['bn4'].backward(dz);
+    dz = model['conv4'].backward(dz);
     dz = model['relu3'].backward(dz);
     dz = model['bn3'].backward(dz);
     dz = model['conv3'].backward(dz);
@@ -167,9 +174,11 @@ def update(model, learning_rate):
     model['conv1'].update(learning_rate);
     model['conv2'].update(learning_rate);
     model['conv3'].update(learning_rate);
+    model['conv4'].update(learning_rate);
     model['bn1'].update(learning_rate);
     model['bn2'].update(learning_rate);
     model['bn3'].update(learning_rate);
     model['bn4'].update(learning_rate);
+    model['bn5'].update(learning_rate);
     model['fc6'].update(learning_rate);
     model['fc7'].update(learning_rate);

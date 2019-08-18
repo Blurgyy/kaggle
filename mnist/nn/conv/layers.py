@@ -2,8 +2,10 @@ __author__ = "Blurgy";
 """
 layers.py
     conv_layer 
+    bottleneck 
     pooling_layer 
-    bn_layer 
+    bn_layer_fc 
+    bn_layer_conv 
     fc_layer 
     ReLU 
     dropout_layer 
@@ -13,7 +15,7 @@ import numpy as np
 import nn_utils as nn 
 
 class conv_layer:
-    def __init__(self, k_filter, f_size, f_depth, padding, stride):
+    def __init__(self, k_filter, f_size, f_depth, padding, stride, ):
         # k: number of filters
         # f: filters' spatial extent
         # stride = 1
@@ -68,6 +70,51 @@ class conv_layer:
         self.f_v = mu * self.f_v - learning_rate * self.df;
         self.b += self.b_v;
         self.filters += self.f_v;
+
+class bottleneck:
+    def __init__(self, k_filter, f_size, f_depth, ):
+        C_reduced = np.ceil((f_depth-1) / 2);
+        k_filter_reduced = np.ceil((k_filter-1) / 2);
+        C_reduced, k_filter_reduced = int(C_reduced), int(k_filter_reduced);
+        C_reduced = max(1, C_reduced);
+        k_filter_reduced = max(1, k_filter_reduced);
+        self.bottleneck_1 = conv_layer(k_filter = C_reduced, 
+                                       f_size = 1, f_depth = f_depth, 
+                                       padding = 0, stride = 1);
+        self.batch_norm_1 = bn_layer_conv(C = C_reduced);
+        self.relu_1 = ReLU();
+        self.conv = conv_layer(k_filter = k_filter_reduced, 
+                               f_size = 3, f_depth = C_reduced, 
+                               padding = 1, stride = 1);
+        self.batch_norm_2 = bn_layer_conv(C = k_filter_reduced);
+        self.relu_2 = ReLU();
+        self.bottleneck_2 = conv_layer(k_filter = k_filter, 
+                                       f_size = 1, f_depth = k_filter_reduced, 
+                                       padding = 0, stride = 1);
+    def forward(self, x, is_test_time, ):
+        x = self.bottleneck_1.forward(x);
+        x = self.batch_norm_1.forward(x, is_test_time);
+        x = self.relu_1.forward(x);
+        x = self.conv.forward(x);
+        x = self.batch_norm_2.forward(x, is_test_time);
+        x = self.relu_2.forward(x);
+        x = self.bottleneck_2.forward(x);
+        return x;
+    def backward(self, dz, ):
+        dz = self.bottleneck_2.backward(dz);
+        dz = self.relu_2.backward(dz);
+        dz = self.batch_norm_2.backward(dz);
+        dz = self.conv.backward(dz);
+        dz = self.relu_1.backward(dz);
+        dz = self.batch_norm_1.backward(dz);
+        dz = self.bottleneck_1.backward(dz);
+        return dz;
+    def update(self, learning_rate, ):
+        self.bottleneck_1.update(learning_rate);
+        self.bottleneck_2.update(learning_rate);
+        self.conv.update(learning_rate);
+        self.batch_norm_1.update(learning_rate);
+        self.batch_norm_2.update(learning_rate);
 
 class pooling_layer:
     def __init__(self, size, padding, stride, ):

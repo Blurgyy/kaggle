@@ -6,15 +6,14 @@ import data
 import numpy as np 
 import nn_utils as nn
 import click 
-import random 
 
 @click.command()
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
 def main(continue_at):
     epoch = 1000;
-    batch_size = 10;
-    train_size = 20;
+    batch_size = 64;
+    train_size = 2;
     learning_rate = 1;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
@@ -23,7 +22,7 @@ def main(continue_at):
     train = data.preprocess_training_set()[0:train_size];
     for ep in range(epoch):
         lr = learning_rate;
-        random.shuffle(train);
+        np.random.shuffle(train);
         X, Y = data.sample_batches_train(train, batch_size);
         yes, cnt, epoch_loss = 0, 0, 0;
         for i in range(len(X)):

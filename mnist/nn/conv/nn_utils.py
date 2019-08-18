@@ -166,6 +166,7 @@ def grad(model, y):
 def update(model, learning_rate):
     model['conv1'].update(learning_rate);
     model['conv2'].update(learning_rate);
+    model['conv3'].update(learning_rate);
     model['bn1'].update(learning_rate);
     model['bn2'].update(learning_rate);
     model['bn3'].update(learning_rate);

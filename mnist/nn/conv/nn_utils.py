@@ -1,3 +1,4 @@
+__author__ = "Blurgy";
 """
 nn_utils.py
     get_im2col_indices 
@@ -57,7 +58,7 @@ def col2im(cols, x_shape, filter_h, filter_w, padding, stride):
     return x_pad[:, :, p:-p, p:-p]
 
 def decay_schedule(length, name):
-    i = np.arange(0, length, 1);
+    i = np.arange(length);
     if(name == "sigmoid"):
         return 1 / (1 + np.exp(i + 1 - length / 2));
     elif(name == "linear"):
@@ -67,75 +68,79 @@ def decay_schedule(length, name):
     elif(name == "constant"):
         return np.ones(length);
     elif(name == "exponential"):
-        return 0.995 ** (i);
+        # return 0.995 ** (i); # without batch-norm
+        return 0.5 ** (i); # with batch-norm
 
 def init_model(reg):
     """
-    [conv -> relu]*2 -> dropout -> pool -> 
-    -> conv -> relu -> dropout -> pool -> 
-    -> fc6 -> relu -> dropout -> fc7 -> output
+    [conv -> batch-norm -> relu]*2 -> pool -> 
+    -> conv -> batch-norm -> relu -> pool -> 
+    -> fc6 -> batch-norm -> relu -> fc7 -> output
     """
     model = {};
-    model['conv1'] = conv_layer(k_filters = 4,
+    model['conv1'] = conv_layer(k_filter = 4,
                                 f_size = 3, f_depth = 1,
                                 padding = 1, stride = 1);
+    model['bn1'] = bn_layer_conv(4);
     model['relu1'] = ReLU();
-    model['conv2'] = conv_layer(k_filters = 16,
+    model['conv2'] = conv_layer(k_filter = 16,
                                 f_size = 3, f_depth = 4,
                                 padding = 1, stride = 1);
+    model['bn2'] = bn_layer_conv(16);
     model['relu2'] = ReLU();
-    model['drop2'] = dropout_layer(0.5);
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['conv3'] = conv_layer(k_filters = 16,
+    model['conv3'] = conv_layer(k_filter = 16,
                                 f_size = 3, f_depth = 16,
                                 padding = 1, stride = 1);
+    model['bn3'] = bn_layer_conv(16);
     model['relu3'] = ReLU();
-    model['drop3'] = dropout_layer(0.5);
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['fc6'] = fc_layer(input_size = 784, output_size = 200, reg = reg);
+    model['bn4'] = bn_layer_fc(200);
     model['relu4'] = ReLU();
-    model['drop4'] = dropout_layer(0.5);
     model['fc7'] = fc_layer(input_size = 200, output_size = 10, reg = reg);
     model['output'] = None;
     return model;
 
 def forward(model, x, is_test_time):
     x = model['conv1'].forward(x);
+    x = model['bn1'].forward(x, is_test_time);
     x = model['relu1'].forward(x);
     x = model['conv2'].forward(x);
+    x = model['bn2'].forward(x, is_test_time);
     x = model['relu2'].forward(x);
-    x = model['drop2'].forward(x, is_test_time);
     x = model['pooling1'].forward(x);
     x = model['conv3'].forward(x);
+    x = model['bn3'].forward(x, is_test_time);
     x = model['relu3'].forward(x);
-    x = model['drop3'].forward(x, is_test_time)
     x = model['pooling2'].forward(x);
     N, C, H, W = x.shape;
     x = x.reshape(N, -1, 1);
     x = model['fc6'].forward(x);
+    x = model['bn4'].forward(x, is_test_time);
     x = model['relu4'].forward(x);
-    x = model['drop4'].forward(x, is_test_time);
     model['output'] = model['fc7'].forward(x);
     return model['output'];
 
 def backward(model, dz):
     dz = model['fc7'].backward(dz);
-    dz = model['drop4'].backward(dz);
     dz = model['relu4'].backward(dz);
+    dz = model['bn4'].backward(dz);
     dz = model['fc6'].backward(dz);
     # N, C, H, W = model['pooling2'].z.shape;
     # dz = dz.reshape(N, C, H, W);
     dz = dz.reshape(model['pooling2'].z.shape);
 
     dz = model['pooling2'].backward(dz);
-    dz = model['drop3'].backward(dz);
     dz = model['relu3'].backward(dz);
+    dz = model['bn3'].backward(dz);
     dz = model['conv3'].backward(dz);
     dz = model['pooling1'].backward(dz);
-    dz = model['drop2'].backward(dz);
     dz = model['relu2'].backward(dz);
+    dz = model['bn2'].backward(dz);
     dz = model['conv2'].backward(dz);
     dz = model['relu1'].backward(dz);
+    dz = model['bn1'].backward(dz);
     model['conv1'].backward(dz);
 
 def grad(model, y):
@@ -158,9 +163,11 @@ def grad(model, y):
     return dz, loss;
 
 def update(model, learning_rate):
-    model['fc7'].update(learning_rate);
-    model['fc6'].update(learning_rate);
-    # model['pooling2'].update(learning_rate);
-    model['conv2'].update(learning_rate);
-    # model['pooling1'].update(learning_rate);
     model['conv1'].update(learning_rate);
+    model['conv2'].update(learning_rate);
+    model['bn1'].update(learning_rate);
+    model['bn2'].update(learning_rate);
+    model['bn3'].update(learning_rate);
+    model['bn4'].update(learning_rate);
+    model['fc6'].update(learning_rate);
+    model['fc7'].update(learning_rate);

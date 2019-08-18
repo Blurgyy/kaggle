@@ -13,10 +13,10 @@ import warnings
 warnings.filterwarnings("error")
 
 @click.command()
-@click.option("--epoch", type = int, default = 30, 
-              help = "Specifies number of epoches, 30 by default")
-@click.option("--rate", type = float, default = 8e-3, 
-              help = "Specifies value of initial learning rate, 8e-3 by default")
+@click.option("--epoch", type = int, default = 10, 
+              help = "Specifies number of epoches, 10 by default")
+@click.option("--rate", type = float, default = 1, 
+              help = "Specifies value of initial learning rate, 1 by default")
 @click.option("--reg", type = float, default = 1e-3,
               help = "Specifies value of [regularization strenth]/[learning rate], 1e-3 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
@@ -39,8 +39,9 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
         lr = learning_rate[ep];
         print("epoch %d/%d, batch size %d, learning rate %g" % (ep+1, epoch, batch_size, lr))
         train = data.preprocess_training_set();
-        print("training set loaded and shuffled");
         X, Y = data.sample_batches_train(train, batch_size);
+        del train;
+        print("training set loaded and shuffled");
 
         yes, cnt, epoch_loss = 0, 0, 0;
         for i in range(len(X)):

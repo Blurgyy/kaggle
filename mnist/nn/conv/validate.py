@@ -26,6 +26,8 @@ def main(model_dump_file):
             predictions = np.argmax(model['output'], axis=1).ravel();
             for i in predictions:
                 cnt += 1
+                if(cnt % 1000 == 0):
+                    print("validating %d/%d" % (cnt,len(test)));
                 f.write("\n%d,%d" % (cnt, i));
 
 if(__name__ == "__main__"):

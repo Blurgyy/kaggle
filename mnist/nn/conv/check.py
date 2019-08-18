@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/python3 -u
+# -*- coding: utf-8 -*-
+__author__ = "Blurgy";
 
 import data 
 import numpy as np 
@@ -12,8 +14,8 @@ import random
 def main(continue_at):
     epoch = 1000;
     batch_size = 10;
-    train_size = 20
-    learning_rate = 1e-3;
+    train_size = 20;
+    learning_rate = 1;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:

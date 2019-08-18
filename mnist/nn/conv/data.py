@@ -1,10 +1,7 @@
-#!/usr/bin/python3 -u 
-# -*- coding: utf-8 -*-
 __author__ = "Blurgy";
 
 import os 
 import pickle 
-import random 
 import numpy as np 
 
 def load_training_set():
@@ -58,8 +55,22 @@ def preprocess_training_set():
     else:
         with open(dmp_path, 'rb') as f:
             training_set = pickle.load(f);
-    random.shuffle(training_set);
+    np.random.shuffle(training_set);
     return training_set;
+
+def preprocess_testing_set():
+    dmp_path = os.path.join("dmp", "test.pickle");
+    if(not os.path.exists("dmp")):
+        os.makedirs("dmp");
+    testing_set = None;
+    if(not os.path.exists(dmp_path)):
+        testing_set = load_testing_set();
+        with open(dmp_path, 'wb') as f:
+            pickle.dump(testing_set, f);
+    else:
+        with open(dmp_path, 'rb') as f:
+            testing_set = pickle.load(f);
+    return testing_set;
 
 def sample_batches_train(training_set, batch_size):
     X, Y, x, y = [], [], [], [];
@@ -79,21 +90,6 @@ def sample_batches_train(training_set, batch_size):
         X.append(np.array(x));
         Y.append(np.array(y));
     return X, Y;
-
-def preprocess_testing_set():
-    dmp_path = os.path.join("dmp", "test.pickle");
-    if(not os.path.exists("dmp")):
-        os.makedirs("dmp");
-    testing_set = None;
-    if(not os.path.exists(dmp_path)):
-        testing_set = load_testing_set();
-        with open(dmp_path, 'wb') as f:
-            pickle.dump(testing_set, f);
-    else:
-        with open(dmp_path, 'rb') as f:
-            testing_set = pickle.load(f);
-    # random.shuffle(testing_set);
-    return testing_set;
 
 def sample_batches_test(testing_set, batch_size):
     X, x = [], [];

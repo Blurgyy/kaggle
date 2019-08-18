@@ -11,7 +11,9 @@ import click
 
 @click.command()
 @click.argument("model-dump-file")
-def main(model_dump_file):
+@click.option("--batch-size", type = int, default = 64, 
+              help = "Specifies batch size, 64 by default")
+def main(model_dump_file, batch_size):
     model = data.load_model(model_dump_file);
     test = np.array(data.preprocess_testing_set());
     if(not os.path.exists("submit")):
@@ -19,7 +21,7 @@ def main(model_dump_file):
     fpath = os.path.join("submit", "submit.csv");
     with open(fpath, 'w') as f:
         f.write("ImageId,Label");
-        X = data.sample_batches_test(test, 32);
+        X = data.sample_batches_test(test, batch_size);
         cnt = 0;
         for x in X:
             nn.forward(model, x, is_test_time = True);

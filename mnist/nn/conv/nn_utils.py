@@ -75,7 +75,8 @@ def init_model(reg):
     """
     [conv -> batch-norm -> relu]*2 -> pool -> 
     -> conv -> batch-norm -> relu -> pool -> 
-    -> fc6 -> batch-norm -> relu -> fc7 -> output
+    -> fc6 -> batch-norm -> relu -> fc7 -> 
+    -> output
     """
     model = {};
     model['conv1'] = conv_layer(k_filter = 4,

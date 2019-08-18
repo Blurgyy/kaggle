@@ -17,15 +17,15 @@ warnings.filterwarnings("error")
               help = "Specifies number of epoches, 10 by default")
 @click.option("--rate", type = float, default = 1, 
               help = "Specifies value of initial learning rate, 1 by default")
-@click.option("--reg", type = float, default = 1e-3,
-              help = "Specifies value of [regularization strenth]/[learning rate], 1e-3 by default")
+@click.option("--reg", type = float, default = 0,
+              help = "Specifies value of [regularization strenth]/[learning rate], 0 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None, 
               help = "Continues training at specified file, initializes a new model if not specified")
-@click.option("--batch-size", type = int, default = 32, 
-              help = "Specifies batch size, 32 by default")
+@click.option("--batch-size", type = int, default = 64, 
+              help = "Specifies batch size, 64 by default")
 def main(epoch, rate, reg, decay, continue_at, batch_size):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);

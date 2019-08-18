@@ -15,8 +15,8 @@ warnings.filterwarnings("error")
 @click.command()
 @click.option("--epoch", type = int, default = 10, 
               help = "Specifies number of epoches, 10 by default")
-@click.option("--rate", type = float, default = 1, 
-              help = "Specifies value of initial learning rate, 1 by default")
+@click.option("--rate", type = float, default = 0.9, 
+              help = "Specifies value of initial learning rate, 0.9 by default")
 @click.option("--reg", type = float, default = 0,
               help = "Specifies value of [regularization strenth]/[learning rate], 0 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 

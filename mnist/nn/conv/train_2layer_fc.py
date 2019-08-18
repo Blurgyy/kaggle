@@ -39,9 +39,9 @@ def update(model, lr):
 
 def main():
     epoch = 10000;
-    lr = 3e-3;
+    lr = 1e-3;
     batch_size = 20;
-    model = fc_model(784, 200, 10);
+    model = fc_model(784, 512, 10);
 
     train = data.preprocess_training_set();
     for ep in range(epoch):

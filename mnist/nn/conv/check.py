@@ -6,14 +6,16 @@ import data
 import numpy as np 
 import nn_utils as nn
 import click 
+import timeit 
 
 @click.command()
+@click.option("--epoch", type = int, default = 1000, 
+              help = "Specifies number of epoches, 1000 by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-def main(continue_at):
-    epoch = 1000;
+def main(epoch, continue_at):
     batch_size = 64;
-    train_size = 2;
+    train_size = 64;
     learning_rate = 1;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);

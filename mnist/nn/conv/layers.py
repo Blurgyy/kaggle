@@ -72,7 +72,7 @@ class conv_layer:
         self.filters += self.f_v;
 
 class bottleneck:
-    def __init__(self, k_filter, f_size, f_depth, ):
+    def __init__(self, k_filter, f_size, f_depth, padding, stride, ):
         C_reduced = np.ceil((f_depth-1) / 2);
         k_filter_reduced = np.ceil((k_filter-1) / 2);
         C_reduced, k_filter_reduced = int(C_reduced), int(k_filter_reduced);
@@ -80,12 +80,12 @@ class bottleneck:
         k_filter_reduced = max(1, k_filter_reduced);
         self.bottleneck_1 = conv_layer(k_filter = C_reduced, 
                                        f_size = 1, f_depth = f_depth, 
-                                       padding = 0, stride = 1);
+                                       padding = 0, stride = stride);
         self.batch_norm_1 = bn_layer_conv(C = C_reduced);
         self.relu_1 = ReLU();
         self.conv = conv_layer(k_filter = k_filter_reduced, 
-                               f_size = 3, f_depth = C_reduced, 
-                               padding = 1, stride = 1);
+                               f_size = f_size, f_depth = C_reduced, 
+                               padding = padding, stride = stride);
         self.batch_norm_2 = bn_layer_conv(C = k_filter_reduced);
         self.relu_2 = ReLU();
         self.bottleneck_2 = conv_layer(k_filter = k_filter, 

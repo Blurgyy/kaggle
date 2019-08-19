@@ -60,7 +60,8 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
         print();
         print("epoch %d/%d, overall loss %.2f" % (ep+1, epoch, epoch_loss));
         data.save_model(model);
-        print("model saved\n");
+        print("model saved");
+        print();
 
 if(__name__ == "__main__"):
     main();

@@ -79,47 +79,47 @@ def init_model(reg):
     -> output
     """
     model = {};
-    model['conv1'] = conv_layer(k_filter = 16,
+    model['conv1'] = bottleneck(k_filter = 32,
                                 f_size = 3, f_depth = 1, 
                                 padding = 1, stride = 1);
-    model['bn1'] = bn_layer_conv(16);
+    model['bn1'] = bn_layer_conv(32);
     model['relu1'] = ReLU();
-    model['conv2'] = conv_layer(k_filter = 64,
-                                f_size = 3, f_depth = 16, 
+    model['conv2'] = bottleneck(k_filter = 32,
+                                f_size = 3, f_depth = 32, 
                                 padding = 1, stride = 1);
-    model['bn2'] = bn_layer_conv(64);
+    model['bn2'] = bn_layer_conv(32);
     model['relu2'] = ReLU();
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['conv3'] = conv_layer(k_filter = 64,
-                                f_size = 3, f_depth = 64, 
+    model['conv3'] = bottleneck(k_filter = 64,
+                                f_size = 3, f_depth = 32, 
                                 padding = 1, stride = 1);
     model['bn3'] = bn_layer_conv(64);
     model['relu3'] = ReLU();
-    model['conv4'] = conv_layer(k_filter = 64,
+    model['conv4'] = bottleneck(k_filter = 64,
                                 f_size = 3, f_depth = 64, 
                                 padding = 1, stride = 1);
     model['bn4'] = bn_layer_conv(64);
     model['relu4'] = ReLU();
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['fc6'] = fc_layer(input_size = 64*7*7, output_size = 512, reg = reg);
-    model['bn5'] = bn_layer_fc(512);
+    model['fc6'] = fc_layer(input_size = 64*7*7, output_size = 1024, reg = reg);
+    model['bn5'] = bn_layer_fc(1024);
     model['relu5'] = ReLU();
-    model['fc7'] = fc_layer(input_size = 512, output_size = 10, reg = reg);
+    model['fc7'] = fc_layer(input_size = 1024, output_size = 10, reg = reg);
     model['output'] = None;
     return model;
 
 def forward(model, x, is_test_time):
-    x = model['conv1'].forward(x);
+    x = model['conv1'].forward(x, is_test_time);
     x = model['bn1'].forward(x, is_test_time);
     x = model['relu1'].forward(x);
-    x = model['conv2'].forward(x);
+    x = model['conv2'].forward(x, is_test_time);
     x = model['bn2'].forward(x, is_test_time);
     x = model['relu2'].forward(x);
     x = model['pooling1'].forward(x);
-    x = model['conv3'].forward(x);
+    x = model['conv3'].forward(x, is_test_time);
     x = model['bn3'].forward(x, is_test_time);
     x = model['relu3'].forward(x);
-    x = model['conv4'].forward(x);
+    x = model['conv4'].forward(x, is_test_time);
     x = model['bn4'].forward(x, is_test_time);
     x = model['relu4'].forward(x);
     x = model['pooling2'].forward(x);

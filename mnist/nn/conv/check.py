@@ -12,8 +12,8 @@ import warnings
 warnings.filterwarnings("error")
 
 @click.command()
-@click.option("--epoch", type = int, default = 100, 
-              help = "Specifies number of epoches, 100 by default")
+@click.option("--epoch", type = int, default = 1000, 
+              help = "Specifies number of epoches, 1000 by default")
 @click.argument("rate", type = float)
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")

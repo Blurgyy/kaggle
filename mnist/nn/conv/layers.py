@@ -68,7 +68,7 @@ class conv_layer:
         assert self.b.size == self.db.size 
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-3;
+        eps = 1e-2;
         self.f_m = beta_1*self.f_m + (1-beta_1)*self.df;
         self.f_v = beta_2*self.f_v + (1-beta_2)*np.power(self.df, 2);
         self.b_m = beta_1*self.b_m + (1-beta_1)*self.db;
@@ -195,7 +195,7 @@ class bn_layer_fc:
     def update(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-3;
+        eps = 1e-2;
         self.gamma_m = beta_1*self.gamma_m + (1-beta_1)*self.dgamma;
         self.gamma_v = beta_2*self.gamma_v + (1-beta_2)*np.power(self.dgamma, 2);
 
@@ -250,7 +250,7 @@ class bn_layer_conv:
     def update(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-3;
+        eps = 1e-2;
         self.gamma_m = beta_1*self.gamma_m + (1-beta_1)*self.dgamma;
         self.gamma_v = beta_2*self.gamma_v + (1-beta_2)*np.power(self.dgamma, 2);
 
@@ -308,7 +308,7 @@ class fc_layer:
     def update(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-3;
+        eps = 1e-2;
         self.w_m = beta_1*self.w_m + (1-beta_1)*self.dw;
         self.w_v = beta_2*self.w_v + (1-beta_2)*np.power(self.dw, 2);
 

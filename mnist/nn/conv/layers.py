@@ -29,10 +29,10 @@ class conv_layer:
         self.init_bias();
     def init_filters(self, ):
         self.filters = np.random.randn(self.k_filter, self.f_depth*self.f_size*self.f_size) / np.sqrt(self.f_size*self.f_size*self.f_depth);
-        self.f_v = 0;
+        self.f_cache = 0;
     def init_bias(self, ):
         self.b = 0.01 * np.random.randn(self.k_filter, 1);
-        self.b_v = 0;
+        self.b_cache = 0;
     def forward(self, x, ):
         self.x = x;
         N, C, H, W = self.x.shape
@@ -59,17 +59,18 @@ class conv_layer:
         self.dx = nn.col2im(self.dx_col, self.x.shape, 
                          filter_h = self.f_size, filter_w = self.f_size, 
                          padding = self.padding, stride = self.stride);
-        return self.dx;
-    def update(self, learning_rate, ):
-        assert self.b.size == self.db.size
         N = self.x.shape[0];
-        mu = 0.6;
         self.db = self.db.reshape(self.k_filter, 1) / N;
         self.df = self.df / N;
-        self.b_v = mu * self.b_v - learning_rate * self.db;
-        self.f_v = mu * self.f_v - learning_rate * self.df;
-        self.b += self.b_v;
-        self.filters += self.f_v;
+        return self.dx;
+    def update(self, learning_rate, ):
+        assert self.b.size == self.db.size 
+        decay_rate = 0.99;
+        eps = 1e-7;
+        self.f_cache = decay_rate * self.f_cache + (1 - decay_rate) * self.df**2;
+        self.b_cache = decay_rate * self.b_cache + (1 - decay_rate) * self.db**2;
+        self.df += -learning_rate * self.f_cache / (np.sqrt(self.f_cache) + eps);
+        self.db += -learning_rate * self.b_cache / (np.sqrt(self.b_cache) + eps);
 
 class bottleneck:
     def __init__(self, k_filter, f_size, f_depth, padding, stride, ):
@@ -155,13 +156,13 @@ class bn_layer_fc:
         self.momentum = 0.9;
         self.init_gamma();
         self.init_beta();
-        self.eps = 1e-15;
+        self.eps = 1e-7;
     def init_gamma(self, ):
         self.gamma = np.random.randn(self.n_neuron).reshape(-1,1) / np.sqrt(self.n_neuron/2);
-        self.gamma_v = 0;
+        self.gamma_cache = 0;
     def init_beta(self, ):
         self.beta = np.random.randn(self.n_neuron).reshape(-1,1) / np.sqrt(self.n_neuron);
-        self.beta_v = 0;
+        self.beta_cache = 0;
     def forward(self, x, is_test_time, ):
         if(not is_test_time):
             self.mean = np.mean(x, axis=(0,2)).reshape(-1,1);
@@ -178,16 +179,17 @@ class bn_layer_fc:
         self.dx = self.gamma / np.sqrt(self.var + self.eps) * dz;
         self.dgamma = np.sum(dz * self.x_hat, axis=(0,2)).reshape(-1,1);
         self.dbeta = np.sum(dz, axis=(0,2)).reshape(-1,1);
-        return self.dx;
-    def update(self, learning_rate, ):
         N = self.x_hat.shape[0];
         self.dgamma /= N;
         self.dbeta /= N;
-        mu = 0.6;
-        self.gamma_v = mu * self.gamma_v - learning_rate * self.dgamma;
-        self.beta_v = mu * self.beta_v - learning_rate * self.dbeta;
-        self.gamma += self.gamma_v;
-        self.beta += self.beta_v;
+        return self.dx;
+    def update(self, learning_rate, ):
+        decay_rate = 0.99;
+        eps = 1e-7;
+        self.gamma_cache = decay_rate * self.gamma_cache + (1 - decay_rate) * self.dgamma**2;
+        self.beta_cache = decay_rate * self.beta_cache + (1 - decay_rate) * self.dbeta**2;
+        self.gamma += -learning_rate * self.dgamma / (np.sqrt(self.gamma_cache) + eps);
+        self.beta += -learning_rate * self.dbeta / (np.sqrt(self.beta_cache) + eps);
 
 class bn_layer_conv:
     def __init__(self, C, ):
@@ -197,13 +199,13 @@ class bn_layer_conv:
         self.momentum = 0.9;
         self.init_gamma();
         self.init_beta();
-        self.eps = 1e-15;
+        self.eps = 1e-7;
     def init_gamma(self, ):
         self.gamma = np.random.randn(self.C).reshape(-1,1,1) / np.sqrt(self.C/2);
-        self.gamma_v = 0;
+        self.gamma_cache = 0;
     def init_beta(self, ):
         self.beta = np.random.randn(self.C).reshape(-1,1,1) / np.sqrt(self.C);
-        self.beta_v = 0;
+        self.beta_cache = 0;
     def forward(self, x, is_test_time, ):
         if(not is_test_time):
             self.mean = np.mean(x, axis=(0,2,3)).reshape(-1,1,1);
@@ -220,30 +222,30 @@ class bn_layer_conv:
         self.dx = self.gamma / np.sqrt(self.var + self.eps) * dz;
         self.dgamma = np.sum(dz * self.x_hat, axis=(0,2,3)).reshape(-1,1,1);
         self.dbeta = np.sum(dz, axis=(0,2,3)).reshape(-1,1,1);
-        return self.dx;
-    def update(self, learning_rate, ):
         N = self.x_hat.shape[0];
         self.dgamma /= N;
         self.dbeta /= N;
-        mu = 0.6;
-        self.gamma_v = mu * self.gamma_v - learning_rate * self.dgamma;
-        self.beta_v = mu * self.beta_v - learning_rate * self.dbeta;
-        self.gamma += self.gamma_v;
-        self.beta += self.beta_v;
+        return self.dx;
+    def update(self, learning_rate, ):
+        decay_rate = 0.99;
+        eps = 1e-7;
+        self.gamma_cache = decay_rate * self.gamma_cache + (1 - decay_rate) * self.dgamma**2;
+        self.beta_cache = decay_rate * self.beta_cache + (1 - decay_rate) * self.dbeta**2;
+        self.gamma += -learning_rate * self.dgamma / (np.sqrt(self.gamma_cache) + eps);
+        self.beta += -learning_rate * self.dbeta / (np.sqrt(self.beta_cache) + eps);
 
 class fc_layer:
-    def __init__(self, input_size, output_size, reg, ):
+    def __init__(self, input_size, output_size, ):
         self.input_size = input_size;
         self.output_size = output_size;
-        self.reg = reg;
         self.init_weights();
         self.init_bias();
     def init_weights(self, ):
         self.w = np.random.randn(self.output_size, self.input_size) / np.sqrt(self.input_size/2);
-        self.w_v = 0;
+        self.w_cache = 0;
     def init_bias(self):
         self.b = np.random.randn(self.output_size, 1) / np.sqrt(self.input_size);
-        self.b_v = 0;
+        self.b_cache = 0;
     def forward(self, x, ):
         self.x = x;
         N = self.x.shape[0];
@@ -267,17 +269,16 @@ class fc_layer:
         self.dw = dz_reshaped @ x_reshaped;
         self.dx = self.w.T @ dz_reshaped;
         self.dx = self.dx.T.reshape(N, self.input_size, 1);
-        return self.dx;
-    def update(self, learning_rate, ):
-        N = self.x.shape[0];
-        mu = 0.6;
         self.dw = self.dw / N;
         self.db = self.db / N;
-        self.w += -self.reg * learning_rate * self.w;
-        self.w_v = mu * self.w_v - learning_rate * self.dw;
-        self.b_v = mu * self.b_v - learning_rate * self.db;
-        self.w += self.w_v;
-        self.b += self.b_v;
+        return self.dx;
+    def update(self, learning_rate, ):
+        decay_rate = 0.99;
+        eps = 1e-7;
+        self.w_cache = decay_rate * self.w_cache + (1 - decay_rate) * self.dw**2;
+        self.b_cache = decay_rate * self.b_cache + (1 - decay_rate) * self.db**2;
+        self.w += -learning_rate * self.dw / (np.sqrt(self.w_cache) + eps);
+        self.b += -learning_rate * self.db / (np.sqrt(self.b_cache) + eps);
 
 class ReLU:
     def __init__(self, ):

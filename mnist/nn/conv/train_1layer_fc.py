@@ -14,7 +14,7 @@ warnings.filterwarnings("error")
 
 def fc_model(input_size, output_size):
     model = {};
-    model['fc1'] = nn.fc_layer(input_size, output_size, 1e-3);
+    model['fc1'] = nn.fc_layer(input_size, output_size);
     model['output'] = None;
     return model;
 

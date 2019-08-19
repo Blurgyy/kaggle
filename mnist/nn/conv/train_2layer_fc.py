@@ -14,10 +14,10 @@ warnings.filterwarnings("error")
 
 def fc_model(input_size, h1_size, output_size):
     model = {};
-    model['fc1'] = nn.fc_layer(input_size, h1_size, 1e-3);
+    model['fc1'] = nn.fc_layer(input_size, h1_size);
     model['relu'] = nn.ReLU();
     model['drop'] = nn.dropout_layer(0.5);
-    model['fc2'] = nn.fc_layer(h1_size, output_size, 1e-3);
+    model['fc2'] = nn.fc_layer(h1_size, output_size);
     model['output'] = None;
     return model;
 
@@ -39,7 +39,7 @@ def update(model, lr):
 
 def main():
     epoch = 10000;
-    lr = 1e-3;
+    lr = 1e-4;
     batch_size = 20;
     model = fc_model(784, 512, 10);
 

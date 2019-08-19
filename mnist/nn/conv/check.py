@@ -8,6 +8,9 @@ import nn_utils as nn
 import click 
 import timeit 
 
+import warnings
+warnings.filterwarnings("error")
+
 @click.command()
 @click.option("--epoch", type = int, default = 1000, 
               help = "Specifies number of epoches, 1000 by default")
@@ -16,11 +19,11 @@ import timeit
 def main(epoch, continue_at):
     batch_size = 64;
     train_size = 64;
-    learning_rate = 1;
+    learning_rate = 3e-2;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
-        model = nn.init_model(1e-3);
+        model = nn.init_model();
     train = data.preprocess_training_set()[0:train_size];
     for ep in range(epoch):
         lr = learning_rate;

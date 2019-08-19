@@ -71,7 +71,7 @@ def decay_schedule(length, name):
         # return 0.995 ** (i); # without batch-norm
         return 0.97 ** (i); # with batch-norm
 
-def init_model(reg):
+def init_model():
     """
     [conv -> batch-norm -> relu]*2 -> pool -> 
     -> conv -> batch-norm -> relu -> pool -> 
@@ -101,10 +101,10 @@ def init_model(reg):
     model['bn4'] = bn_layer_conv(64);
     model['relu4'] = ReLU();
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['fc6'] = fc_layer(input_size = 64*7*7, output_size = 1024, reg = reg);
+    model['fc6'] = fc_layer(input_size = 64*7*7, output_size = 1024);
     model['bn5'] = bn_layer_fc(1024);
     model['relu5'] = ReLU();
-    model['fc7'] = fc_layer(input_size = 1024, output_size = 10, reg = reg);
+    model['fc7'] = fc_layer(input_size = 1024, output_size = 10);
     model['output'] = None;
     return model;
 
@@ -159,12 +159,10 @@ def grad(model, y):
     prob = model['output'].copy();
     prob -= np.max(prob, axis=1).reshape(-1,1,1);
     prob = np.exp(prob) / np.sum(np.exp(prob), axis=1).reshape(-1,1,1);
-    # print("check:\n", prob, y);
     dz = prob.copy();
     a0 = np.arange(len(y)).reshape(-1,1);
     y = y.reshape(-1,1);
     a2 = np.repeat(0, len(y)).reshape(-1,1);
-    # dz[a0,y,a2] -= 1;
     np.add.at(dz, (a0,y,a2), -1);
     try:
         loss = np.sum(-np.log(prob[a0,y,a2]))

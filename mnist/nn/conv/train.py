@@ -15,10 +15,8 @@ warnings.filterwarnings("error")
 @click.command()
 @click.option("--epoch", type = int, default = 10, 
               help = "Specifies number of epoches, 10 by default")
-@click.option("--rate", type = float, default = 0.9, 
-              help = "Specifies value of initial learning rate, 0.9 by default")
-@click.option("--reg", type = float, default = 0,
-              help = "Specifies value of [regularization strenth]/[learning rate], 0 by default")
+@click.option("--rate", type = float, default = 1e-3, 
+              help = "Specifies value of initial learning rate, 1e-3 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")
@@ -26,14 +24,14 @@ warnings.filterwarnings("error")
               help = "Continues training at specified file, initializes a new model if not specified")
 @click.option("--batch-size", type = int, default = 64, 
               help = "Specifies batch size, 64 by default")
-def main(epoch, rate, reg, decay, continue_at, batch_size):
+def main(epoch, rate, decay, continue_at, batch_size):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
     learning_rate = base_learning_rate * decay_schedule;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
-        model = nn.init_model(reg);
+        model = nn.init_model();
 
     for ep in range(epoch):
         lr = learning_rate[ep];
@@ -55,7 +53,7 @@ def main(epoch, rate, reg, decay, continue_at, batch_size):
             score = prediction.reshape(-1,1) == y.reshape(-1,1);
             yes += np.sum(score);
             cnt += len(y);
-            print("[%d/%d]: %.2f%%, batch loss: %.2f    " % (yes, cnt, yes / cnt * 100, loss), end = '\r');
+            print("[%d], acc %.2f%%, loss: %.2f    " % (cnt, yes/cnt*100, loss), end = '\r');
             nn.update(model, lr);
         print();
         print("epoch %d/%d, overall loss %.2f" % (ep+1, epoch, epoch_loss));

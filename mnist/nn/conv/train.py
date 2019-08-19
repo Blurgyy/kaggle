@@ -18,8 +18,8 @@ warnings.filterwarnings("error")
 @click.option("--rate", type = float, default = 1e-3, 
               help = "Specifies value of initial learning rate, 1e-3 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
-              default = "exponential", 
-              help = "Specifies decay schedule of learning rate, exponential by default")
+              default = "constant", 
+              help = "Specifies decay schedule of learning rate, constant by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None, 
               help = "Continues training at specified file, initializes a new model if not specified")
 @click.option("--batch-size", type = int, default = 64, 

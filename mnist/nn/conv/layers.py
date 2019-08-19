@@ -68,14 +68,14 @@ class conv_layer:
         assert self.b.size == self.db.size 
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-2;
+        eps = 1e-3;
         self.f_m = beta_1*self.f_m + (1-beta_1)*self.df;
         self.f_v = beta_2*self.f_v + (1-beta_2)*np.power(self.df, 2);
         self.b_m = beta_1*self.b_m + (1-beta_1)*self.db;
-        self.b_m = beta_1*self.b_v + (1-beta_2)*np.power(self.db, 2);
+        self.b_v = beta_2*self.b_v + (1-beta_2)*np.power(self.db, 2);
         f_m_hat = self.f_m / (1-np.power(beta_1, self.t));
         f_v_hat = self.f_v / (1-np.power(beta_2, self.t));
-        b_m_hat = self.b_m/ (1-np.power(beta_1, self.t));
+        b_m_hat = self.b_m / (1-np.power(beta_1, self.t));
         b_v_hat = self.b_v / (1-np.power(beta_2, self.t));
         self.filters += -learning_rate * f_m_hat / (np.sqrt(f_v_hat) + eps);
         self.b += -learning_rate * b_m_hat / (np.sqrt(b_v_hat) + eps);
@@ -195,15 +195,19 @@ class bn_layer_fc:
     def update(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-2;
+        eps = 1e-3;
         self.gamma_m = beta_1*self.gamma_m + (1-beta_1)*self.dgamma;
         self.gamma_v = beta_2*self.gamma_v + (1-beta_2)*np.power(self.dgamma, 2);
+
         self.beta_m = beta_1*self.beta_m + (1-beta_1)*self.dbeta;
         self.beta_v = beta_2*self.beta_v + (1-beta_2)*np.power(self.dbeta, 2);
+
         gamma_m_hat = self.gamma_m / (1-np.power(beta_1, self.t));
         gamma_v_hat = self.gamma_v / (1-np.power(beta_2, self.t));
+
         beta_m_hat = self.beta_m / (1-np.power(beta_1, self.t));
         beta_v_hat = self.beta_v / (1-np.power(beta_2, self.t));
+
         self.gamma += -learning_rate * gamma_m_hat / (np.sqrt(gamma_v_hat) + eps);
         self.beta += -learning_rate * beta_m_hat / (np.sqrt(beta_v_hat) + eps);
 
@@ -246,15 +250,19 @@ class bn_layer_conv:
     def update(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-2;
+        eps = 1e-3;
         self.gamma_m = beta_1*self.gamma_m + (1-beta_1)*self.dgamma;
         self.gamma_v = beta_2*self.gamma_v + (1-beta_2)*np.power(self.dgamma, 2);
+
         self.beta_m = beta_1*self.beta_m + (1-beta_1)*self.dbeta;
         self.beta_v = beta_2*self.beta_v + (1-beta_2)*np.power(self.dbeta, 2);
+
         gamma_m_hat = self.gamma_m / (1-np.power(beta_1, self.t));
         gamma_v_hat = self.gamma_v / (1-np.power(beta_2, self.t));
+
         beta_m_hat = self.beta_m / (1-np.power(beta_1, self.t));
         beta_v_hat = self.beta_v / (1-np.power(beta_2, self.t));
+
         self.gamma += -learning_rate * gamma_m_hat / (np.sqrt(gamma_v_hat) + eps);
         self.beta += -learning_rate * beta_m_hat / (np.sqrt(beta_v_hat) + eps);
 
@@ -300,15 +308,19 @@ class fc_layer:
     def update(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
-        eps = 1e-2;
+        eps = 1e-3;
         self.w_m = beta_1*self.w_m + (1-beta_1)*self.dw;
         self.w_v = beta_2*self.w_v + (1-beta_2)*np.power(self.dw, 2);
+
         self.b_m = beta_1*self.b_m + (1-beta_1)*self.db;
         self.b_v = beta_2*self.b_v + (1-beta_2)*np.power(self.db, 2);
+
         w_m_hat = self.w_m / (1-np.power(beta_1, self.t));
         w_v_hat = self.w_v / (1-np.power(beta_2, self.t));
+
         b_m_hat = self.b_m / (1-np.power(beta_1, self.t));
         b_v_hat = self.b_v / (1-np.power(beta_2, self.t));
+
         self.w += -learning_rate * w_m_hat / (np.sqrt(w_v_hat) + eps);
         self.b += -learning_rate * b_m_hat / (np.sqrt(b_v_hat) + eps);
 

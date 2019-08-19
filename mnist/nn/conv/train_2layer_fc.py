@@ -15,22 +15,22 @@ warnings.filterwarnings("error")
 def fc_model(input_size, h1_size, output_size):
     model = {};
     model['fc1'] = nn.fc_layer(input_size, h1_size);
+    model['bn'] = nn.bn_layer_fc(h1_size);
     model['relu'] = nn.ReLU();
-    model['drop'] = nn.dropout_layer(0.5);
     model['fc2'] = nn.fc_layer(h1_size, output_size);
     model['output'] = None;
     return model;
 
 def forward(model, x):
     x = model['fc1'].forward(x);
+    x = model['bn'].forward(x, False)
     x = model['relu'].forward(x);
-    x = model['drop'].forward(x, False)
     model['output'] = model['fc2'].forward(x);
 
 def backward(model, dz):
     dz = model['fc2'].backward(dz);
-    dz = model['drop'].backward(dz);
     dz = model['relu'].backward(dz);
+    dz = model['bn'].backward(dz);
     model['fc1'].backward(dz);
 
 def update(model, lr):
@@ -39,7 +39,7 @@ def update(model, lr):
 
 def main():
     epoch = 10000;
-    lr = 1e-4;
+    lr = 1e-3;
     batch_size = 20;
     model = fc_model(784, 512, 10);
 

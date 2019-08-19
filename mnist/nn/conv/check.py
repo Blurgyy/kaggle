@@ -6,25 +6,27 @@ import data
 import numpy as np 
 import nn_utils as nn
 import click 
-import timeit 
+import plot 
 
 import warnings
 warnings.filterwarnings("error")
 
 @click.command()
-@click.option("--epoch", type = int, default = 1000, 
-              help = "Specifies number of epoches, 1000 by default")
+@click.option("--epoch", type = int, default = 100, 
+              help = "Specifies number of epoches, 100 by default")
+@click.argument("rate", type = float)
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-def main(epoch, continue_at):
+def main(epoch, rate, continue_at):
     batch_size = 64;
     train_size = 64;
-    learning_rate = 1e-3;
+    learning_rate = 1e-1;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
         model = nn.init_model();
     train = data.preprocess_training_set()[0:train_size];
+    loss_curve = plot.plot();
     for ep in range(epoch):
         lr = learning_rate;
         np.random.shuffle(train);
@@ -42,6 +44,8 @@ def main(epoch, continue_at):
             yes += np.sum(score);
             cnt += len(y);
             nn.update(model, lr);
+        loss_curve.append(epoch_loss);
+        loss_curve.save("loss.png")
         print("ep %d/%d, acc %0.2f%%, overall loss %.2f" % (ep+1, epoch, yes / cnt * 100, epoch_loss));
         # data.save_model(model);
 

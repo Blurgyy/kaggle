@@ -69,8 +69,8 @@ class conv_layer:
         eps = 1e-7;
         self.f_cache = decay_rate * self.f_cache + (1 - decay_rate) * self.df**2;
         self.b_cache = decay_rate * self.b_cache + (1 - decay_rate) * self.db**2;
-        self.df += -learning_rate * self.f_cache / (np.sqrt(self.f_cache) + eps);
-        self.db += -learning_rate * self.b_cache / (np.sqrt(self.b_cache) + eps);
+        self.filters += -learning_rate * self.f_cache / (np.sqrt(self.f_cache) + eps);
+        self.b += -learning_rate * self.b_cache / (np.sqrt(self.b_cache) + eps);
 
 class bottleneck:
     def __init__(self, k_filter, f_size, f_depth, padding, stride, ):

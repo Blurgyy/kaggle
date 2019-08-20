@@ -66,8 +66,8 @@ def main(epoch, rate, decay, continue_at, batch_size):
         print("epoch %d/%d, overall loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, epoch_loss, etime-stime));
         data.save_model(model);
         loss_curve.append(epoch_loss);
-        acc_curve.save("acc.jpg");
-        loss_curve.save("loss.jpg");
+        acc_curve.save("acc.png");
+        loss_curve.save("loss.png");
         print("model saved");
         print();
 

@@ -49,7 +49,7 @@ def main(epoch, rate, continue_at, batch_size):
             nn.update(model, lr);
         etime = time.perf_counter();
         loss_curve.append(epoch_loss);
-        loss_curve.save("loss.jpg")
+        loss_curve.save("loss.png")
         acc = yes/cnt*100;
         print("ep %d/%d, acc %0.2f%%, loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
         # data.save_model(model);

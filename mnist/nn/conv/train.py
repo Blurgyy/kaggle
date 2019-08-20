@@ -6,6 +6,7 @@ import os
 import numpy as np 
 import data 
 import nn_utils as nn 
+import time 
 import plot 
 import click 
 
@@ -42,6 +43,9 @@ def main(epoch, rate, decay, continue_at, batch_size):
         print("training set loaded and shuffled");
 
         yes, cnt, epoch_loss = 0, 0, 0;
+        acc_curve = plot.plot();
+        loss_curve = plot.plot();
+        stime = time.perf_counter();
         for i in range(len(X)):
             x, y = X[i], Y[i];
             nn.forward(model, x, is_test_time = False);
@@ -53,11 +57,17 @@ def main(epoch, rate, decay, continue_at, batch_size):
             score = prediction.reshape(-1,1) == y.reshape(-1,1);
             yes += np.sum(score);
             cnt += len(y);
-            print(" %d/%d, acc %.2f%%, loss %.2f   " % (yes, cnt, yes/cnt*100, loss), end = '\r');
+            acc = yes/cnt*100;
+            print(" %d/%d, acc %.2f%%, loss %.2f   " % (yes, cnt, acc, loss), end = '\r');
+            acc_curve.append(acc);
             nn.update(model, lr);
+        etime = time.perf_counter();
         print();
-        print("epoch %d/%d, overall loss %.2f" % (ep+1, epoch, epoch_loss));
+        print("epoch %d/%d, overall loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, epoch_loss, etime-stime));
         data.save_model(model);
+        loss_curve.append(epoch_loss);
+        acc_curve.save("acc.jpg");
+        loss_curve.save("loss.jpg");
         print("model saved");
         print();
 

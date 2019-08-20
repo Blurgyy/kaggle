@@ -6,6 +6,7 @@ import data
 import numpy as np 
 import nn_utils as nn
 import click 
+import time 
 import plot 
 
 import warnings
@@ -45,7 +46,7 @@ def main(epoch, rate, continue_at):
             cnt += len(y);
             nn.update(model, lr);
         loss_curve.append(epoch_loss);
-        loss_curve.save("loss.png")
+        loss_curve.save("loss.jpg")
         print("ep %d/%d, acc %0.2f%%, overall loss %.2f" % (ep+1, epoch, yes / cnt * 100, epoch_loss));
         # data.save_model(model);
 

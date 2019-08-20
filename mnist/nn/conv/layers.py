@@ -73,12 +73,12 @@ class conv_layer:
         self.f_v = beta_2*self.f_v + (1-beta_2)*np.power(self.df, 2);
         self.b_m = beta_1*self.b_m + (1-beta_1)*self.db;
         self.b_v = beta_2*self.b_v + (1-beta_2)*np.power(self.db, 2);
-        f_m_hat = self.f_m / (1-np.power(beta_1, self.t));
-        f_v_hat = self.f_v / (1-np.power(beta_2, self.t));
-        b_m_hat = self.b_m / (1-np.power(beta_1, self.t));
-        b_v_hat = self.b_v / (1-np.power(beta_2, self.t));
-        self.filters += -learning_rate * f_m_hat / (np.sqrt(f_v_hat) + eps);
-        self.b += -learning_rate * b_m_hat / (np.sqrt(b_v_hat) + eps);
+        learning_rate = learning_rate * np.sqrt(1-np.power(beta_2, self.t)) / (1-np.power(beta_1, self.t));
+        # print(" --", np.max(np.abs(-learning_rate * self.f_m / (np.sqrt(self.f_v) + eps))), 
+        #              np.max(np.abs(self.x_col.T)),
+        #              self.x_col.T.shape);
+        self.filters += -learning_rate * self.f_m / (np.sqrt(self.f_v) + eps);
+        self.b += -learning_rate * self.b_m / (np.sqrt(self.b_v) + eps);
 
 class bottleneck:
     def __init__(self, k_filter, f_size, f_depth, padding, stride, ):
@@ -90,40 +90,32 @@ class bottleneck:
         self.bottleneck_1 = conv_layer(k_filter = C_reduced, 
                                        f_size = 1, f_depth = f_depth, 
                                        padding = 0, stride = stride);
-        self.batch_norm_1 = bn_layer_conv(C = C_reduced);
         self.relu_1 = ReLU();
         self.conv = conv_layer(k_filter = k_filter_reduced, 
                                f_size = f_size, f_depth = C_reduced, 
                                padding = padding, stride = stride);
-        self.batch_norm_2 = bn_layer_conv(C = k_filter_reduced);
         self.relu_2 = ReLU();
         self.bottleneck_2 = conv_layer(k_filter = k_filter, 
                                        f_size = 1, f_depth = k_filter_reduced, 
                                        padding = 0, stride = 1);
-    def forward(self, x, is_test_time, ):
+    def forward(self, x, ):
         x = self.bottleneck_1.forward(x);
-        x = self.batch_norm_1.forward(x, is_test_time);
         x = self.relu_1.forward(x);
         x = self.conv.forward(x);
-        x = self.batch_norm_2.forward(x, is_test_time);
         x = self.relu_2.forward(x);
         x = self.bottleneck_2.forward(x);
         return x;
     def backward(self, dz, ):
         dz = self.bottleneck_2.backward(dz);
         dz = self.relu_2.backward(dz);
-        dz = self.batch_norm_2.backward(dz);
         dz = self.conv.backward(dz);
         dz = self.relu_1.backward(dz);
-        dz = self.batch_norm_1.backward(dz);
         dz = self.bottleneck_1.backward(dz);
         return dz;
     def update(self, learning_rate, ):
         self.bottleneck_1.update(learning_rate);
         self.bottleneck_2.update(learning_rate);
         self.conv.update(learning_rate);
-        self.batch_norm_1.update(learning_rate);
-        self.batch_norm_2.update(learning_rate);
 
 class pooling_layer:
     def __init__(self, size, padding, stride, ):
@@ -198,18 +190,11 @@ class bn_layer_fc:
         eps = 1e-2;
         self.gamma_m = beta_1*self.gamma_m + (1-beta_1)*self.dgamma;
         self.gamma_v = beta_2*self.gamma_v + (1-beta_2)*np.power(self.dgamma, 2);
-
         self.beta_m = beta_1*self.beta_m + (1-beta_1)*self.dbeta;
         self.beta_v = beta_2*self.beta_v + (1-beta_2)*np.power(self.dbeta, 2);
-
-        gamma_m_hat = self.gamma_m / (1-np.power(beta_1, self.t));
-        gamma_v_hat = self.gamma_v / (1-np.power(beta_2, self.t));
-
-        beta_m_hat = self.beta_m / (1-np.power(beta_1, self.t));
-        beta_v_hat = self.beta_v / (1-np.power(beta_2, self.t));
-
-        self.gamma += -learning_rate * gamma_m_hat / (np.sqrt(gamma_v_hat) + eps);
-        self.beta += -learning_rate * beta_m_hat / (np.sqrt(beta_v_hat) + eps);
+        learning_rate = learning_rate * np.sqrt(1-np.power(beta_2, self.t)) / (1 - np.power(beta_1, self.t));
+        self.gamma += -learning_rate * self.gamma_m / (np.sqrt(self.gamma_v) + eps);
+        self.beta += -learning_rate * self.beta_m / (np.sqrt(self.beta_v) + eps);
 
 class bn_layer_conv:
     def __init__(self, C, ):
@@ -253,18 +238,11 @@ class bn_layer_conv:
         eps = 1e-2;
         self.gamma_m = beta_1*self.gamma_m + (1-beta_1)*self.dgamma;
         self.gamma_v = beta_2*self.gamma_v + (1-beta_2)*np.power(self.dgamma, 2);
-
         self.beta_m = beta_1*self.beta_m + (1-beta_1)*self.dbeta;
         self.beta_v = beta_2*self.beta_v + (1-beta_2)*np.power(self.dbeta, 2);
-
-        gamma_m_hat = self.gamma_m / (1-np.power(beta_1, self.t));
-        gamma_v_hat = self.gamma_v / (1-np.power(beta_2, self.t));
-
-        beta_m_hat = self.beta_m / (1-np.power(beta_1, self.t));
-        beta_v_hat = self.beta_v / (1-np.power(beta_2, self.t));
-
-        self.gamma += -learning_rate * gamma_m_hat / (np.sqrt(gamma_v_hat) + eps);
-        self.beta += -learning_rate * beta_m_hat / (np.sqrt(beta_v_hat) + eps);
+        learning_rate = learning_rate * np.sqrt(1-np.power(beta_2, self.t)) / (1 - np.power(beta_1, self.t));
+        self.gamma += -learning_rate * self.gamma_m / (np.sqrt(self.gamma_v) + eps);
+        self.beta += -learning_rate * self.beta_m / (np.sqrt(self.beta_v) + eps);
 
 class fc_layer:
     def __init__(self, input_size, output_size, ):
@@ -311,18 +289,11 @@ class fc_layer:
         eps = 1e-2;
         self.w_m = beta_1*self.w_m + (1-beta_1)*self.dw;
         self.w_v = beta_2*self.w_v + (1-beta_2)*np.power(self.dw, 2);
-
         self.b_m = beta_1*self.b_m + (1-beta_1)*self.db;
         self.b_v = beta_2*self.b_v + (1-beta_2)*np.power(self.db, 2);
-
-        w_m_hat = self.w_m / (1-np.power(beta_1, self.t));
-        w_v_hat = self.w_v / (1-np.power(beta_2, self.t));
-
-        b_m_hat = self.b_m / (1-np.power(beta_1, self.t));
-        b_v_hat = self.b_v / (1-np.power(beta_2, self.t));
-
-        self.w += -learning_rate * w_m_hat / (np.sqrt(w_v_hat) + eps);
-        self.b += -learning_rate * b_m_hat / (np.sqrt(b_v_hat) + eps);
+        learning_rate = learning_rate * np.sqrt(1-np.power(beta_2, self.t)) / (1 - np.power(beta_1, self.t));
+        self.w += -learning_rate * self.w_m / (np.sqrt(self.w_v) + eps);
+        self.b += -learning_rate * self.b_m / (np.sqrt(self.b_v) + eps);
 
 class ReLU:
     def __init__(self, ):

@@ -109,17 +109,17 @@ def init_model():
     return model;
 
 def forward(model, x, is_test_time):
-    x = model['conv1'].forward(x, is_test_time);
+    x = model['conv1'].forward(x);
     x = model['bn1'].forward(x, is_test_time);
     x = model['relu1'].forward(x);
-    x = model['conv2'].forward(x, is_test_time);
+    x = model['conv2'].forward(x);
     x = model['bn2'].forward(x, is_test_time);
     x = model['relu2'].forward(x);
     x = model['pooling1'].forward(x);
-    x = model['conv3'].forward(x, is_test_time);
+    x = model['conv3'].forward(x);
     x = model['bn3'].forward(x, is_test_time);
     x = model['relu3'].forward(x);
-    x = model['conv4'].forward(x, is_test_time);
+    x = model['conv4'].forward(x);
     x = model['bn4'].forward(x, is_test_time);
     x = model['relu4'].forward(x);
     x = model['pooling2'].forward(x);

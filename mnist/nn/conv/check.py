@@ -20,7 +20,7 @@ warnings.filterwarnings("error")
 def main(epoch, rate, continue_at):
     batch_size = 64;
     train_size = 64;
-    learning_rate = 1e-1;
+    learning_rate = rate;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:

@@ -18,8 +18,9 @@ warnings.filterwarnings("error")
 @click.argument("rate", type = float)
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-def main(epoch, rate, continue_at):
-    batch_size = 64;
+@click.option("--batch-size", type = int, default = 64, 
+              help = "Specifies batch size, 64 by default")
+def main(epoch, rate, continue_at, batch_size):
     train_size = 64;
     learning_rate = rate;
     if(continue_at and os.path.exists(continue_at)):
@@ -33,6 +34,7 @@ def main(epoch, rate, continue_at):
         np.random.shuffle(train);
         X, Y = data.sample_batches_train(train, batch_size);
         yes, cnt, epoch_loss = 0, 0, 0;
+        stime = time.perf_counter();
         for i in range(len(X)):
             x, y = X[i], Y[i];
             nn.forward(model, x, is_test_time = False);
@@ -45,9 +47,11 @@ def main(epoch, rate, continue_at):
             yes += np.sum(score);
             cnt += len(y);
             nn.update(model, lr);
+        etime = time.perf_counter();
         loss_curve.append(epoch_loss);
         loss_curve.save("loss.jpg")
-        print("ep %d/%d, acc %0.2f%%, overall loss %.2f" % (ep+1, epoch, yes / cnt * 100, epoch_loss));
+        acc = yes/cnt*100;
+        print("ep %d/%d, acc %0.2f%%, loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
         # data.save_model(model);
 
 if(__name__ == "__main__"):

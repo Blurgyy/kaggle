@@ -11,8 +11,8 @@ import click
 
 @click.command()
 @click.argument("model-dump-file")
-@click.option("--batch-size", type = int, default = 64, 
-              help = "Specifies batch size, 64 by default")
+@click.option("--batch-size", type = int, default = 32, 
+              help = "Specifies batch size, 32 by default")
 def main(model_dump_file, batch_size):
     model = data.load_model(model_dump_file);
     test = np.array(data.preprocess_testing_set());

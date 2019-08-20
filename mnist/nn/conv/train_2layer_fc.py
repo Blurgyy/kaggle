@@ -40,15 +40,15 @@ def update(model, lr):
 def main():
     epoch = 10000;
     lr = 1e-3;
-    batch_size = 20;
-    model = fc_model(784, 512, 10);
+    batch_size = 64;
+    model = fc_model(784, 1024, 10);
 
     train = data.preprocess_training_set();
     for ep in range(epoch):
         yes, cnt = 0, 0;
         X, Y = data.sample_batches_train(train, batch_size);
         for i in range(len(X)):
-            x, y = X[i].reshape(batch_size, 784, 1), Y[i];
+            x, y = X[i].reshape(-1, 784, 1), Y[i];
             forward(model, x);
             dz, loss = nn.grad(model, y);
             backward(model, dz);
@@ -63,8 +63,8 @@ def main():
             yes += np.sum(score);
             cnt += batch_size;
             # print("???", prob[a0,y,a2])
-            if(cnt % batch_size == 0):
-                print("[%d/%d]: %.2f%%, loss = %.2f" % (yes, cnt, yes / cnt * 100, loss), end = '\r');
+            # if(cnt % batch_size == 0):
+            print("[%d/%d]: %.2f%%, loss = %.2f" % (yes, cnt, yes / cnt * 100, loss), end = '\r');
             # input()
         print()
 

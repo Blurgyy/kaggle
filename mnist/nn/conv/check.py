@@ -26,7 +26,7 @@ def main(epoch, rate, continue_at, batch_size):
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
-        model = nn.init_model();
+        model = nn.init_model(4, 16, 16, 16);
     train = data.preprocess_training_set()[0:train_size];
     loss_curve = plot.plot();
     for ep in range(epoch):

@@ -32,7 +32,7 @@ def main(epoch, rate, decay, continue_at, batch_size):
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
-        model = nn.init_model();
+        model = nn.init_model(4, 16, 16, 16);
 
     acc_curve = plot.plot();
     loss_curve = plot.plot();

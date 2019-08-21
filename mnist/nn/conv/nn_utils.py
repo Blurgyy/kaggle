@@ -71,7 +71,7 @@ def decay_schedule(length, name):
         # return 0.995 ** (i); # without batch-norm
         return 0.97 ** (i); # with batch-norm
 
-def init_model():
+def init_model(C1, C2, C3, C4):
     """
     [conv -> batch-norm -> relu]*2 -> pool -> 
     -> conv -> batch-norm -> relu -> pool -> 
@@ -79,29 +79,29 @@ def init_model():
     -> output
     """
     model = {};
-    model['conv1'] = bottleneck(k_filter = 32,
+    model['conv1'] = bottleneck(k_filter = C1,
                                 f_size = 3, f_depth = 1, 
                                 padding = 1, stride = 1);
-    model['bn1'] = bn_layer_conv(32);
+    model['bn1'] = bn_layer_conv(C1);
     model['relu1'] = ReLU();
-    model['conv2'] = bottleneck(k_filter = 32,
-                                f_size = 3, f_depth = 32, 
+    model['conv2'] = bottleneck(k_filter = C2,
+                                f_size = 3, f_depth = C1, 
                                 padding = 1, stride = 1);
-    model['bn2'] = bn_layer_conv(32);
+    model['bn2'] = bn_layer_conv(C2);
     model['relu2'] = ReLU();
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['conv3'] = bottleneck(k_filter = 64,
-                                f_size = 3, f_depth = 32, 
+    model['conv3'] = bottleneck(k_filter = C3,
+                                f_size = 3, f_depth = C2, 
                                 padding = 1, stride = 1);
-    model['bn3'] = bn_layer_conv(64);
+    model['bn3'] = bn_layer_conv(C3);
     model['relu3'] = ReLU();
-    model['conv4'] = bottleneck(k_filter = 64,
-                                f_size = 3, f_depth = 64, 
+    model['conv4'] = bottleneck(k_filter = C4,
+                                f_size = 3, f_depth = C3, 
                                 padding = 1, stride = 1);
-    model['bn4'] = bn_layer_conv(64);
+    model['bn4'] = bn_layer_conv(C4);
     model['relu4'] = ReLU();
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
-    model['fc6'] = fc_layer(input_size = 64*7*7, output_size = 1024);
+    model['fc6'] = fc_layer(input_size = C4*7*7, output_size = 1024);
     model['bn5'] = bn_layer_fc(1024);
     model['relu5'] = ReLU();
     model['fc7'] = fc_layer(input_size = 1024, output_size = 10);

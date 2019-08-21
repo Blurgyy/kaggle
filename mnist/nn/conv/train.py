@@ -34,6 +34,8 @@ def main(epoch, rate, decay, continue_at, batch_size):
     else:
         model = nn.init_model();
 
+    acc_curve = plot.plot();
+    loss_curve = plot.plot();
     for ep in range(epoch):
         lr = learning_rate[ep];
         train = data.preprocess_training_set();
@@ -43,8 +45,6 @@ def main(epoch, rate, decay, continue_at, batch_size):
         print("training set loaded and shuffled");
 
         yes, cnt, epoch_loss = 0, 0, 0;
-        acc_curve = plot.plot();
-        loss_curve = plot.plot();
         stime = time.perf_counter();
         for i in range(len(X)):
             x, y = X[i], Y[i];

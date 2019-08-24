@@ -59,7 +59,7 @@ def main(epoch, rate, continue_at, batch_size, channels):
         loss_curve.save("loss.png")
         acc_curve.save("acc.png");
         print("ep %d/%d, acc %0.2f%%, loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
-        data.save_model(model);
+        # data.save_model(model);
 
 if(__name__ == "__main__"):
     main();

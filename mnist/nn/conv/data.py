@@ -3,11 +3,41 @@ __author__ = "Blurgy";
 import os 
 import pickle 
 import numpy as np 
+from PIL import Image 
+
+def shift(x):
+    flag = np.random.randint(0,2);
+    dist = np.random.randint(1,2);
+    if(flag == 0):
+        return np.roll(x, dist, axis=0);
+    elif(flag == 1):
+        return np.roll(x, dist, axis=1);
+    else:
+        return np.roll(x, dist, axis=(0,1));
+
+def rotate(x, deg):
+    ret = x.reshape(28,28);
+    img = Image.fromarray(ret.astype('uint8'));
+    rot = img.rotate(deg);
+    return np.asarray(rot);
+
+def augment_training_set(train):
+    ret = train.copy();
+    for elem in train:
+        label, img = elem;
+        img = img.reshape(28, 28);
+        # (h/v) shift (1/2) grids (random)
+        ret.append([label, shift(img).reshape(1,28,28)]);
+        # rotate 5~15 degrees 
+        deg = np.random.randint(5,16);
+        deg *= 1 if np.random.rand() > 1 else -1;
+        ret.append([label, rotate(img, deg).reshape(1,28,28)]);
+        pass;
+    return ret;
 
 def load_training_set():
     fpath = os.path.join(os.getcwd(), "dat", "train.csv");
     ret = [];
-    print();
     with open(fpath) as f:
         f.readline();
         for line in f.readlines():
@@ -16,18 +46,23 @@ def load_training_set():
             imginfo = [];
             for i in range(1, len(data)):
                 imginfo.append(int(data[i].strip()));
-            imginfo = np.array(imginfo).reshape(1, 28, 28);
-            imginfo -= int(np.mean(imginfo)); # zero centering
+            imginfo = np.array(imginfo).reshape(1,28,28).astype('int16');
             ret.append([label, imginfo]);
             if(len(ret) % 1000 == 0):
                 print("\rloading training set: %d" % (len(ret)), end = "");
-    print("\ncomplete");
+        # augmentation
+        print("\naugmenting... ", end="");
+        ret = augment_training_set(ret);
+        for elem in ret:
+            label, img = elem;
+            img = img.astype('int16');
+            img -= int(np.mean(img)); # zero centering
+    print("complete, size %d\n" % (len(ret)));
     return ret;
 
 def load_testing_set():
     fpath = os.path.join(os.getcwd(), "dat", "test.csv");
     ret = [];
-    print();
     with open(fpath) as f:
         f.readline();
         for line in f.readlines():
@@ -35,12 +70,12 @@ def load_testing_set():
             imginfo = [];
             for i in range(0, len(data)):
                 imginfo.append(int(data[i].strip()));
-            imginfo = np.array(imginfo).reshape(1, 28, 28);
+            imginfo = np.array(imginfo).reshape(1,28,28).astype('int16');
             imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append(imginfo);
             if(len(ret) % 1000 == 0):
                 print("\rloading testing set: %d" % (len(ret)), end = "");
-    print("\ncomplete");
+    print("\ncomplete\n");
     return ret;
 
 def preprocess_training_set():
@@ -106,18 +141,14 @@ def sample_batches_test(testing_set, batch_size):
     return X;
 
 def save_model(model):
-    model_dmp_path = os.path.join("dmp", "model.pickle");
+    model_dmp_path = os.path.join("dmp", model['name']+".pickle");
     if(not os.path.exists("dmp")):
         os.makedirs("dmp");
     with open(model_dmp_path, 'wb') as f:
         pickle.dump(model, f);
 
-def load_model(ipath = None):
-    model_dmp_path = os.path.join("dmp", "model.pickle");
-    if(ipath == None):
-        pass;
-    else:
-        model_dmp_path = ipath;
+def load_model(ipath):
+    model_dmp_path = ipath;
     if(not os.path.exists(model_dmp_path)):
         raise ValueError("file [%s] does not exist" % model_dmp_path);
     model = None;

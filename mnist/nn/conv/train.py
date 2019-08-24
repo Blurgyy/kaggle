@@ -25,25 +25,28 @@ warnings.filterwarnings("error")
               help = "Continues training at specified file, initializes a new model if not specified")
 @click.option("--batch-size", type = int, default = 64, 
               help = "Specifies batch size, 64 by default")
-def main(epoch, rate, decay, continue_at, batch_size):
+@click.option("--channels", type = (int, int, int, int), default = (4, 16, 16, 16), 
+              help = "Specifies conv layer sizes, <4, 16, 16, 16> by default")
+def main(epoch, rate, decay, continue_at, batch_size, channels):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
     learning_rate = base_learning_rate * decay_schedule;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
-        model = nn.init_model(4, 16, 16, 16);
+        model = nn.init_model(*channels);
 
     acc_curve = plot.plot();
     loss_curve = plot.plot();
     for ep in range(epoch):
         lr = learning_rate[ep];
         train = data.preprocess_training_set();
+        print("training set(%d instances) loaded and shuffled" % (len(train)));
         X, Y = data.sample_batches_train(train, batch_size);
         del train;
         print("epoch %d/%d, batch size %d, learning rate %g" % (ep+1, epoch, batch_size, lr))
-        print("training set loaded and shuffled");
 
+        model['epoch'] += 1;
         yes, cnt, epoch_loss = 0, 0, 0;
         stime = time.perf_counter();
         for i in range(len(X)):

@@ -20,13 +20,15 @@ warnings.filterwarnings("error")
               help = "Continues training at specified file, initializes a new model if not specified")
 @click.option("--batch-size", type = int, default = 64, 
               help = "Specifies batch size, 64 by default")
-def main(epoch, rate, continue_at, batch_size):
+@click.option("--channels", type = (int, int, int, int), default = (4, 16, 16, 16), 
+              help = "Specifies conv layer sizes, <4, 16, 16, 16> by default")
+def main(epoch, rate, continue_at, batch_size, channels):
     train_size = 64;
     learning_rate = rate;
     if(continue_at and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
-        model = nn.init_model(4, 16, 16, 16);
+        model = nn.init_model(*channels);
     train = data.preprocess_training_set()[0:train_size];
     loss_curve = plot.plot();
     acc_curve = plot.plot();
@@ -57,7 +59,7 @@ def main(epoch, rate, continue_at, batch_size):
         loss_curve.save("loss.png")
         acc_curve.save("acc.png");
         print("ep %d/%d, acc %0.2f%%, loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
-        # data.save_model(model);
+        data.save_model(model);
 
 if(__name__ == "__main__"):
     main();

@@ -72,13 +72,15 @@ def decay_schedule(length, name):
         # return 0.97 ** (i); # with batch-norm
 
 def init_model(C1, C2, C3, C4):
+    model = {};
+    model['name'] = "c%dc%dc%dc%d"%(C1, C2, C3, C4);
+    model['epoch'] = 0;
     """
-    [conv -> batch-norm -> relu]*2 -> pool -> 
-    -> conv -> batch-norm -> relu -> pool -> 
-    -> fc6 -> batch-norm -> relu -> fc7 -> 
+    [conv  -> relu -> dropout]*2 -> pool -> 
+    -> [conv -> relu -> dropout]*2 -> pool -> 
+    -> fc6 -> relu -> dropout -> fc7 -> 
     -> output
     """
-    model = {};
     model['conv1'] = conv_layer(k_filter = C1,
                                 f_size = 3, f_depth = 1, 
                                 padding = 1, stride = 1);
@@ -114,31 +116,17 @@ def init_model(C1, C2, C3, C4):
     return model;
 
 def forward(model, x, is_test_time):
-    x = model['conv1'].forward(x);
-    # x = model['bn1'].forward(x, is_test_time);
-    x = model['relu1'].forward(x);
-    x = model['drop1'].forward(x, is_test_time);
-    x = model['conv2'].forward(x);
-    # x = model['bn2'].forward(x, is_test_time);
-    x = model['relu2'].forward(x);
-    x = model['drop2'].forward(x, is_test_time);
-    x = model['pooling1'].forward(x);
-    x = model['conv3'].forward(x);
-    # x = model['bn3'].forward(x, is_test_time);
-    x = model['relu3'].forward(x);
-    x = model['drop3'].forward(x, is_test_time);
-    x = model['conv4'].forward(x);
-    # x = model['bn4'].forward(x, is_test_time);
-    x = model['relu4'].forward(x);
-    x = model['drop4'].forward(x, is_test_time);
-    x = model['pooling2'].forward(x);
-    N, C, H, W = x.shape;
-    x = x.reshape(N, -1, 1);
-    x = model['fc6'].forward(x);
-    # x = model['bn5'].forward(x, is_test_time);
-    x = model['relu5'].forward(x);
-    x = model['drop5'].forward(x, is_test_time);
-    model['output'] = model['fc7'].forward(x);
+    for layer in model:
+        if(layer == 'fc6'):
+            N, C, H, W = x.shape;
+            x = x.reshape(N, -1, 1);
+        try:
+            x = model[layer].forward(x, is_test_time);
+        except TypeError:
+            x = model[layer].forward(x);
+        except AttributeError:
+            if(layer == 'output'):
+                model['output'] = x;
     return model['output'];
 
 def backward(model, dz):

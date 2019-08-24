@@ -16,15 +16,15 @@ warnings.filterwarnings("error")
 @click.command()
 @click.option("--epoch", type = int, default = 20, 
               help = "Specifies number of epoches, 20 by default")
-@click.option("--rate", type = float, default = 1e-1, 
-              help = "Specifies value of initial learning rate, 1e-1 by default")
+@click.option("--rate", type = float, default = 1, 
+              help = "Specifies value of initial learning rate, 1 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
-              default = "constant", 
-              help = "Specifies decay schedule of learning rate, constant by default")
+              default = "exponential", 
+              help = "Specifies decay schedule of learning rate, exponential by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None, 
               help = "Continues training at specified file, initializes a new model if not specified")
-@click.option("--batch-size", type = int, default = 32, 
-              help = "Specifies batch size, 32 by default")
+@click.option("--batch-size", type = int, default = 64, 
+              help = "Specifies batch size, 64 by default")
 def main(epoch, rate, decay, continue_at, batch_size):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
@@ -60,7 +60,8 @@ def main(epoch, rate, decay, continue_at, batch_size):
             acc = yes/cnt*100;
             print(" %d/%d, acc %.2f%%, loss %.2f   " % (yes, cnt, acc, loss), end = '\r');
             acc_curve.append(acc);
-            nn.update(model, lr);
+            # nn.adam_update(model, lr);
+            nn.sgd_update(model, lr);
         etime = time.perf_counter();
         print();
         print("epoch %d/%d, overall loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, epoch_loss, etime-stime));

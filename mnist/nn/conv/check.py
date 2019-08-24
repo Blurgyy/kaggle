@@ -29,6 +29,7 @@ def main(epoch, rate, continue_at, batch_size):
         model = nn.init_model(4, 16, 16, 16);
     train = data.preprocess_training_set()[0:train_size];
     loss_curve = plot.plot();
+    acc_curve = plot.plot();
     for ep in range(epoch):
         lr = learning_rate;
         np.random.shuffle(train);
@@ -46,11 +47,15 @@ def main(epoch, rate, continue_at, batch_size):
             score = prediction.reshape(-1,1) == y.reshape(-1,1);
             yes += np.sum(score);
             cnt += len(y);
-            nn.update(model, lr);
+            nn.adam_update(model, lr);
+            # nn.momentum_update(model, lr);
+            # nn.sgd_update(model, lr);
         etime = time.perf_counter();
-        loss_curve.append(epoch_loss);
-        loss_curve.save("loss.png")
         acc = yes/cnt*100;
+        loss_curve.append(epoch_loss);
+        acc_curve.append(acc);
+        loss_curve.save("loss.png")
+        acc_curve.save("acc.png");
         print("ep %d/%d, acc %0.2f%%, loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
         # data.save_model(model);
 

@@ -64,7 +64,18 @@ class conv_layer:
         self.db = self.db.reshape(self.k_filter, 1) / N;
         self.df = self.df / N;
         return self.dx;
-    def update(self, learning_rate, ):
+    def momentum(self, learning_rate, ):
+        assert self.b.size == self.db.size 
+        mu = 0.5;
+        self.f_v = mu * self.f_v - learning_rate * self.df;
+        self.b_v = mu * self.b_v - learning_rate * self.db;
+        self.filters += self.f_v;
+        self.b += self.b_v;
+    def sgd(self, learning_rate, ):
+        assert self.b.size == self.db.size 
+        self.filters += -learning_rate * self.df;
+        self.b += -learning_rate * self.db * 0.1;
+    def adam(self, learning_rate, ):
         assert self.b.size == self.db.size 
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
@@ -112,10 +123,18 @@ class bottleneck:
         dz = self.relu_1.backward(dz);
         dz = self.bottleneck_1.backward(dz);
         return dz;
-    def update(self, learning_rate, ):
-        self.bottleneck_1.update(learning_rate);
-        self.bottleneck_2.update(learning_rate);
-        self.conv.update(learning_rate);
+    def momentum(self, learning_rate, ):
+        self.bottleneck_1.momentum(learning_rate);
+        self.bottleneck_2.momentum(learning_rate);
+        self.conv.momentum(learning_rate);
+    def sgd(self, learning_rate, ):
+        self.bottleneck_1.sgd(learning_rate);
+        self.bottleneck_2.sgd(learning_rate);
+        self.conv.sgd(learning_rate);
+    def adam(self, learning_rate, ):
+        self.bottleneck_1.adam(learning_rate);
+        self.bottleneck_2.adam(learning_rate);
+        self.conv.adam(learning_rate);
 
 class pooling_layer:
     def __init__(self, size, padding, stride, ):
@@ -184,7 +203,16 @@ class bn_layer_fc:
         self.dgamma /= N;
         self.dbeta /= N;
         return self.dx;
-    def update(self, learning_rate, ):
+    def momentum(self, learning_rate, ):
+        mu = 0.5;
+        self.gamma_v = mu * self.gamma_v - learning_rate * self.dgamma;
+        self.beta_v = mu * self.beta_v - learning_rate * self.dbeta;
+        self.gamma += self.gamma_v;
+        self.beta += self.beta_v;
+    def sgd(self, learning_rate, ):
+        self.gamma += -learning_rate * self.dgamma;
+        self.beta += -learning_rate * self.dbeta * 0.1;
+    def adam(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
         eps = 1e-2;
@@ -232,7 +260,16 @@ class bn_layer_conv:
         self.dgamma /= N;
         self.dbeta /= N;
         return self.dx;
-    def update(self, learning_rate, ):
+    def momentum(self, learning_rate, ):
+        mu = 0.5;
+        self.gamma_v = mu * self.gamma_v - learning_rate * self.dgamma;
+        self.beta_v = mu * self.beta_v - learning_rate * self.dbeta;
+        self.gamma += self.gamma_v;
+        self.beta += self.beta_v;
+    def sgd(self, learning_rate, ):
+        self.gamma += -learning_rate * self.dgamma;
+        self.beta += -learning_rate * self.dbeta * 0.1;
+    def adam(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
         eps = 1e-2;
@@ -283,7 +320,16 @@ class fc_layer:
         self.dw = self.dw / N;
         self.db = self.db / N;
         return self.dx;
-    def update(self, learning_rate, ):
+    def momentum(self, learning_rate, ):
+        mu = 0.5;
+        self.w_v = mu * self.w_v - learning_rate * self.dw;
+        self.b_v = mu * self.b_v - learning_rate * self.db;
+        self.w += self.w_v;
+        self.b += self.b_v;
+    def sgd(self, learning_rate, ):
+        self.w += -learning_rate * self.dw;
+        self.b += -learning_rate * self.db * 0.1;
+    def adam(self, learning_rate, ):
         self.t += 1;
         beta_1, beta_2 = 0.9, 0.999;
         eps = 1e-2;
@@ -307,13 +353,13 @@ class ReLU:
         return self.dx;
 
 class dropout_layer:
-    def __init__(self, p = 0.5, ):
+    def __init__(self, p, ):
         self.p = p; # dropout ratio
     def forward(self, x, is_test_time, ):
         if(is_test_time):
             self.mask = self.p;
         else:
-            self.mask = (np.random.rand(*x.shape) < self.p);
+            self.mask = (np.random.rand(*x.shape) > self.p);
         self.z = x * self.mask;
         return self.z;
     def backward(self, dz, ):

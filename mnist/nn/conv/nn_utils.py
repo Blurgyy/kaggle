@@ -68,8 +68,8 @@ def decay_schedule(length, name):
     elif(name == "constant"):
         return np.ones(length);
     elif(name == "exponential"):
-        # return 0.995 ** (i); # without batch-norm
-        return 0.97 ** (i); # with batch-norm
+        return 0.995 ** (i); # without batch-norm
+        # return 0.97 ** (i); # with batch-norm
 
 def init_model(C1, C2, C3, C4):
     """
@@ -82,31 +82,31 @@ def init_model(C1, C2, C3, C4):
     model['conv1'] = conv_layer(k_filter = C1,
                                 f_size = 3, f_depth = 1, 
                                 padding = 1, stride = 1);
-    model['bn1'] = bn_layer_conv(C1);
+    # model['bn1'] = bn_layer_conv(C1);
     model['relu1'] = ReLU();
     model['drop1'] = dropout_layer(0.5);
     model['conv2'] = conv_layer(k_filter = C2,
                                 f_size = 3, f_depth = C1, 
                                 padding = 1, stride = 1);
-    model['bn2'] = bn_layer_conv(C2);
+    # model['bn2'] = bn_layer_conv(C2);
     model['relu2'] = ReLU();
     model['drop2'] = dropout_layer(0.5)
     model['pooling1'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['conv3'] = conv_layer(k_filter = C3,
                                 f_size = 3, f_depth = C2, 
                                 padding = 1, stride = 1);
-    model['bn3'] = bn_layer_conv(C3);
+    # model['bn3'] = bn_layer_conv(C3);
     model['relu3'] = ReLU();
     model['drop3'] = dropout_layer(0.5);
     model['conv4'] = conv_layer(k_filter = C4,
                                 f_size = 3, f_depth = C3, 
                                 padding = 1, stride = 1);
-    model['bn4'] = bn_layer_conv(C4);
+    # model['bn4'] = bn_layer_conv(C4);
     model['relu4'] = ReLU();
     model['drop4'] = dropout_layer(0.5);
     model['pooling2'] = pooling_layer(size = 2, padding = 0, stride = 2);
     model['fc6'] = fc_layer(input_size = C4*7*7, output_size = 1024);
-    model['bn5'] = bn_layer_fc(1024);
+    # model['bn5'] = bn_layer_fc(1024);
     model['relu5'] = ReLU();
     model['drop5'] = dropout_layer(0.5);
     model['fc7'] = fc_layer(input_size = 1024, output_size = 10);
@@ -115,27 +115,27 @@ def init_model(C1, C2, C3, C4):
 
 def forward(model, x, is_test_time):
     x = model['conv1'].forward(x);
-    x = model['bn1'].forward(x, is_test_time);
+    # x = model['bn1'].forward(x, is_test_time);
     x = model['relu1'].forward(x);
     x = model['drop1'].forward(x, is_test_time);
     x = model['conv2'].forward(x);
-    x = model['bn2'].forward(x, is_test_time);
+    # x = model['bn2'].forward(x, is_test_time);
     x = model['relu2'].forward(x);
     x = model['drop2'].forward(x, is_test_time);
     x = model['pooling1'].forward(x);
     x = model['conv3'].forward(x);
-    x = model['bn3'].forward(x, is_test_time);
+    # x = model['bn3'].forward(x, is_test_time);
     x = model['relu3'].forward(x);
     x = model['drop3'].forward(x, is_test_time);
     x = model['conv4'].forward(x);
-    x = model['bn4'].forward(x, is_test_time);
+    # x = model['bn4'].forward(x, is_test_time);
     x = model['relu4'].forward(x);
     x = model['drop4'].forward(x, is_test_time);
     x = model['pooling2'].forward(x);
     N, C, H, W = x.shape;
     x = x.reshape(N, -1, 1);
     x = model['fc6'].forward(x);
-    x = model['bn5'].forward(x, is_test_time);
+    # x = model['bn5'].forward(x, is_test_time);
     x = model['relu5'].forward(x);
     x = model['drop5'].forward(x, is_test_time);
     model['output'] = model['fc7'].forward(x);
@@ -145,7 +145,7 @@ def backward(model, dz):
     dz = model['fc7'].backward(dz);
     dz = model['drop5'].backward(dz);
     dz = model['relu5'].backward(dz);
-    dz = model['bn5'].backward(dz);
+    # dz = model['bn5'].backward(dz);
     dz = model['fc6'].backward(dz);
     # N, C, H, W = model['pooling2'].z.shape;
     # dz = dz.reshape(N, C, H, W);
@@ -154,20 +154,20 @@ def backward(model, dz):
     dz = model['pooling2'].backward(dz);
     dz = model['drop4'].backward(dz);
     dz = model['relu4'].backward(dz);
-    dz = model['bn4'].backward(dz);
+    # dz = model['bn4'].backward(dz);
     dz = model['conv4'].backward(dz);
     dz = model['drop3'].backward(dz);
     dz = model['relu3'].backward(dz);
-    dz = model['bn3'].backward(dz);
+    # dz = model['bn3'].backward(dz);
     dz = model['conv3'].backward(dz);
     dz = model['pooling1'].backward(dz);
     dz = model['drop2'].backward(dz);
     dz = model['relu2'].backward(dz);
-    dz = model['bn2'].backward(dz);
+    # dz = model['bn2'].backward(dz);
     dz = model['conv2'].backward(dz);
     dz = model['drop1'].backward(dz);
     dz = model['relu1'].backward(dz);
-    dz = model['bn1'].backward(dz);
+    # dz = model['bn1'].backward(dz);
     model['conv1'].backward(dz);
 
 def grad(model, y):
@@ -192,11 +192,11 @@ def adam_update(model, learning_rate):
     model['conv2'].adam(learning_rate);
     model['conv3'].adam(learning_rate);
     model['conv4'].adam(learning_rate);
-    model['bn1'].adam(learning_rate);
-    model['bn2'].adam(learning_rate);
-    model['bn3'].adam(learning_rate);
-    model['bn4'].adam(learning_rate);
-    model['bn5'].adam(learning_rate);
+    # model['bn1'].adam(learning_rate);
+    # model['bn2'].adam(learning_rate);
+    # model['bn3'].adam(learning_rate);
+    # model['bn4'].adam(learning_rate);
+    # model['bn5'].adam(learning_rate);
     model['fc6'].adam(learning_rate);
     model['fc7'].adam(learning_rate);
 
@@ -205,11 +205,11 @@ def momentum_update(model, learning_rate):
     model['conv2'].momentum(learning_rate);
     model['conv3'].momentum(learning_rate);
     model['conv4'].momentum(learning_rate);
-    model['bn1'].momentum(learning_rate);
-    model['bn2'].momentum(learning_rate);
-    model['bn3'].momentum(learning_rate);
-    model['bn4'].momentum(learning_rate);
-    model['bn5'].momentum(learning_rate);
+    # model['bn1'].momentum(learning_rate);
+    # model['bn2'].momentum(learning_rate);
+    # model['bn3'].momentum(learning_rate);
+    # model['bn4'].momentum(learning_rate);
+    # model['bn5'].momentum(learning_rate);
     model['fc6'].momentum(learning_rate);
     model['fc7'].momentum(learning_rate);
 
@@ -218,10 +218,10 @@ def sgd_update(model, learning_rate):
     model['conv2'].sgd(learning_rate);
     model['conv3'].sgd(learning_rate);
     model['conv4'].sgd(learning_rate);
-    model['bn1'].sgd(learning_rate);
-    model['bn2'].sgd(learning_rate);
-    model['bn3'].sgd(learning_rate);
-    model['bn4'].sgd(learning_rate);
-    model['bn5'].sgd(learning_rate);
+    # model['bn1'].sgd(learning_rate);
+    # model['bn2'].sgd(learning_rate);
+    # model['bn3'].sgd(learning_rate);
+    # model['bn4'].sgd(learning_rate);
+    # model['bn5'].sgd(learning_rate);
     model['fc6'].sgd(learning_rate);
     model['fc7'].sgd(learning_rate);

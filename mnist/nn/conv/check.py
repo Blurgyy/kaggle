@@ -47,8 +47,8 @@ def main(epoch, rate, continue_at, batch_size):
             score = prediction.reshape(-1,1) == y.reshape(-1,1);
             yes += np.sum(score);
             cnt += len(y);
-            nn.adam_update(model, lr);
-            # nn.momentum_update(model, lr);
+            # nn.adam_update(model, lr);
+            nn.momentum_update(model, lr);
             # nn.sgd_update(model, lr);
         etime = time.perf_counter();
         acc = yes/cnt*100;

@@ -7,7 +7,8 @@ from PIL import Image
 
 def shift(x):
     flag = np.random.randint(0,2);
-    dist = np.random.randint(1,2);
+    dist = np.random.randint(1,3);
+    dist *= 1 if np.random.randn() > 0 else -1;
     if(flag == 0):
         return np.roll(x, dist, axis=0);
     elif(flag == 1):
@@ -19,7 +20,7 @@ def rotate(x, deg):
     ret = x.reshape(28,28);
     img = Image.fromarray(ret.astype('uint8'));
     rot = img.rotate(deg);
-    return np.asarray(rot);
+    return np.asarray(rot).astype('int16');
 
 def augment_training_set(train):
     ret = train.copy();
@@ -28,12 +29,20 @@ def augment_training_set(train):
         img = img.reshape(28, 28);
         # (h/v) shift (1/2) grids (random)
         ret.append([label, shift(img).reshape(1,28,28)]);
-        # rotate 5~15 degrees 
-        deg = np.random.randint(5,16);
-        deg *= 1 if np.random.rand() > 1 else -1;
+        # rotate 10~15 degrees 
+        deg = np.random.randint(10,16);
+        deg *= 1 if np.random.randn() > 0 else -1;
         ret.append([label, rotate(img, deg).reshape(1,28,28)]);
-        pass;
     return ret;
+
+def normalize_training_set(train):
+    for elem in train:
+        label, img = elem;
+        img -= int(np.mean(img));
+
+def normalize_testing_set(test):
+    for img in test:
+        img -= int(np.mean(img));
 
 def load_training_set():
     fpath = os.path.join(os.getcwd(), "dat", "train.csv");
@@ -50,14 +59,6 @@ def load_training_set():
             ret.append([label, imginfo]);
             if(len(ret) % 1000 == 0):
                 print("\rloading training set: %d" % (len(ret)), end = "");
-        # augmentation
-        print("\naugmenting... ", end="");
-        ret = augment_training_set(ret);
-        for elem in ret:
-            label, img = elem;
-            img = img.astype('int16');
-            img -= int(np.mean(img)); # zero centering
-    print("complete, size %d\n" % (len(ret)));
     return ret;
 
 def load_testing_set():
@@ -71,7 +72,6 @@ def load_testing_set():
             for i in range(0, len(data)):
                 imginfo.append(int(data[i].strip()));
             imginfo = np.array(imginfo).reshape(1,28,28).astype('int16');
-            imginfo -= int(np.mean(imginfo)); # zero centering
             ret.append(imginfo);
             if(len(ret) % 1000 == 0):
                 print("\rloading testing set: %d" % (len(ret)), end = "");
@@ -85,6 +85,12 @@ def preprocess_training_set():
     training_set = None;
     if(not os.path.exists(dmp_path)):
         training_set = load_training_set();
+        # augment
+        print("\naugmenting.. ", end="");
+        training_set = augment_training_set(training_set);
+        print("normalizing.. ", end="");
+        normalize_training_set(training_set);
+        print("complete, size %d\n" % (len(training_set)));
         with open(dmp_path, 'wb') as f:
             pickle.dump(training_set, f);
     else:
@@ -100,6 +106,7 @@ def preprocess_testing_set():
     testing_set = None;
     if(not os.path.exists(dmp_path)):
         testing_set = load_testing_set();
+        normalize_testing_set(testing_set);
         with open(dmp_path, 'wb') as f:
             pickle.dump(testing_set, f);
     else:

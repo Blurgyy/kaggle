@@ -18,10 +18,10 @@ warnings.filterwarnings("error")
 @click.argument("rate", type = float)
 @click.option("--continue-at", type = click.Path(exists=True), default = None,
               help = "Continues training at specified file, initializes a new model if not specified")
-@click.option("--batch-size", type = int, default = 64, 
-              help = "Specifies batch size, 64 by default")
-@click.option("--channels", type = (int, int, int, int), default = (4, 16, 16, 16), 
-              help = "Specifies conv layer sizes, <4, 16, 16, 16> by default")
+@click.option("--batch-size", type = int, default = 32, 
+              help = "Specifies batch size, 32 by default")
+@click.option("--channels", type = (int, int, int, int), default = (32, 32, 64, 64), 
+              help = "Specifies conv layer sizes, <32, 32, 64, 64> by default")
 def main(epoch, rate, continue_at, batch_size, channels):
     train_size = 64;
     learning_rate = rate;
@@ -49,8 +49,8 @@ def main(epoch, rate, continue_at, batch_size, channels):
             score = prediction.reshape(-1,1) == y.reshape(-1,1);
             yes += np.sum(score);
             cnt += len(y);
-            # nn.adam_update(model, lr);
-            nn.momentum_update(model, lr);
+            nn.adam_update(model, lr);
+            # nn.momentum_update(model, lr);
             # nn.sgd_update(model, lr);
         etime = time.perf_counter();
         acc = yes/cnt*100;
@@ -58,7 +58,7 @@ def main(epoch, rate, continue_at, batch_size, channels):
         acc_curve.append(acc);
         loss_curve.save("loss.png")
         acc_curve.save("acc.png");
-        print("ep %d/%d, acc %0.2f%%, loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
+        print("ep %d/%d, acc %0.2f%%, overall loss %.2f, time elapsed %.2f second(s)" % (ep+1, epoch, acc, epoch_loss, etime-stime));
         # data.save_model(model);
 
 if(__name__ == "__main__"):

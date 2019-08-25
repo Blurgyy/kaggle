@@ -16,17 +16,17 @@ warnings.filterwarnings("error")
 @click.command()
 @click.option("--epoch", type = int, default = 20, 
               help = "Specifies number of epoches, 20 by default")
-@click.option("--rate", type = float, default = 1e-2, 
-              help = "Specifies value of initial learning rate, 1e-2 by default")
+@click.option("--rate", type = float, default = 1e-3, 
+              help = "Specifies value of initial learning rate, 1e-3 by default")
 @click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
               default = "exponential", 
               help = "Specifies decay schedule of learning rate, exponential by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None, 
               help = "Continues training at specified file, initializes a new model if not specified")
-@click.option("--batch-size", type = int, default = 64, 
-              help = "Specifies batch size, 64 by default")
-@click.option("--channels", type = (int, int, int, int), default = (4, 16, 16, 16), 
-              help = "Specifies conv layer sizes, <4, 16, 16, 16> by default")
+@click.option("--batch-size", type = int, default = 32, 
+              help = "Specifies batch size, 32 by default")
+@click.option("--channels", type = (int, int, int, int), default = (32, 32, 64, 64), 
+              help = "Specifies conv layer sizes, <32, 32, 64, 64> by default")
 def main(epoch, rate, decay, continue_at, batch_size, channels):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
@@ -61,10 +61,10 @@ def main(epoch, rate, decay, continue_at, batch_size, channels):
             yes += np.sum(score);
             cnt += len(y);
             acc = yes/cnt*100;
-            print(" %d/%d, acc %.2f%%, loss %.2f   " % (yes, cnt, acc, loss), end = '\r');
+            print(" %d/%d, acc %.2f%%, loss %.2f   " % (yes, cnt, acc, loss/batch_size), end = '\r');
             acc_curve.append(acc);
-            # nn.adam_update(model, lr);
-            nn.momentum_update(model, lr);
+            nn.adam_update(model, lr);
+            # nn.momentum_update(model, lr);
             # nn.sgd_update(model, lr);
         etime = time.perf_counter();
         print();

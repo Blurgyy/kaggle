@@ -1,3 +1,3 @@
 # Kaggle
 
-`MNIST`: `98.028%`
+- MNIST: 99.014%

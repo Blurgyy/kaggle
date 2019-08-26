@@ -61,7 +61,7 @@ def main(epoch, rate, decay, continue_at, batch_size, channels):
             yes += np.sum(score);
             cnt += len(y);
             acc = yes/cnt*100;
-            print(" %d/%d, acc %.2f%%, loss %.2f   " % (yes, cnt, acc, loss/batch_size), end = '\r');
+            print(" %d/%d, acc %.2f%%, batch loss %.2f   " % (yes, cnt, acc, loss), end = '\r');
             acc_curve.append(acc);
             nn.adam_update(model, lr);
             # nn.momentum_update(model, lr);

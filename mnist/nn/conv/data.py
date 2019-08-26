@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image 
 
 def shift(x):
-    flag = np.random.randint(0,2);
+    flag = np.random.randint(0,3);
     dist = np.random.randint(1,3);
     dist *= 1 if np.random.randn() > 0 else -1;
     if(flag == 0):

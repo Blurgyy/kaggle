@@ -15,23 +15,24 @@ warnings.filterwarnings("error")
 
 @click.command()
 @click.option("--epoch", type = int, default = 20, 
-              help = "Specifies number of epoches, 20 by default")
+              help = "Specify number of epoches, 20 by default")
 @click.option("--rate", type = float, default = 1e-3, 
-              help = "Specifies value of initial learning rate, 1e-3 by default")
-@click.option("--decay", type = click.Choice(["exponential", "constant", "linear", "sigmoid", "hyperbola"]), 
-              default = "exponential", 
-              help = "Specifies decay schedule of learning rate, exponential by default")
+              help = "Specify value of initial learning rate, 1e-3 by default")
+@click.option("--decay", type = click.Choice(["exponential", "constant", "staircase"]), 
+              default = "staircase", 
+              help = "Specify decay schedule of learning rate, `staircase` by default")
 @click.option("--continue-at", type = click.Path(exists=True), default = None, 
-              help = "Continues training at specified file, initializes a new model if not specified")
+              help = "Continue training at specified file, initializes a new model if not specified")
 @click.option("--batch-size", type = int, default = 32, 
-              help = "Specifies batch size, 32 by default")
+              help = "Specify batch size, 32 by default")
 @click.option("--channels", type = (int, int, int, int), default = (32, 32, 64, 64), 
-              help = "Specifies conv layer sizes, <32, 32, 64, 64> by default")
+              help = "Specify conv layer sizes, <32, 32, 64, 64> by default")
 def main(epoch, rate, decay, continue_at, batch_size, channels):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
+    print(decay_schedule, len(decay_schedule))
     learning_rate = base_learning_rate * decay_schedule;
-    if(continue_at and os.path.exists(continue_at)):
+    if(continue_at != None and os.path.exists(continue_at)):
         model = data.load_model(continue_at);
     else:
         model = nn.init_model(*channels);
@@ -44,7 +45,7 @@ def main(epoch, rate, decay, continue_at, batch_size, channels):
         print("training set(%d instances) loaded and shuffled" % (len(train)));
         X, Y = data.sample_batches_train(train, batch_size);
         del train;
-        print("epoch %d/%d, batch size %d, learning rate %g" % (ep+1, epoch, batch_size, lr))
+        print("epoch %d/%d, batch size %d, learning rate %g" % (ep+1, epoch, batch_size, lr));
 
         model['epoch'] += 1;
         yes, cnt, epoch_loss = 0, 0, 0;

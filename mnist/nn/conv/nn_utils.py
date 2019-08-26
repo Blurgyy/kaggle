@@ -57,19 +57,18 @@ def col2im(cols, x_shape, filter_h, filter_w, padding, stride):
         return x_pad
     return x_pad[:, :, p:-p, p:-p]
 
-def decay_schedule(length, name):
+def decay_schedule(length, decay):
     i = np.arange(length);
-    if(name == "sigmoid"):
-        return 1 / (1 + np.exp(i + 1 - length / 2));
-    elif(name == "linear"):
-        return (length - i) / length;
-    elif(name == "hyperbola"):
-        return 1 / (i + 1);
-    elif(name == "constant"):
-        return np.ones(length);
-    elif(name == "exponential"):
+    if(decay == "exponential"):
         return 0.995 ** (i); # without batch-norm
         # return 0.97 ** (i); # with batch-norm
+    elif(decay == "constant"):
+        return np.ones(length);
+    elif(decay == "staircase"):
+        patience, rate = 4, 0.5;
+        base = np.arange(int(np.ceil(length/patience)));
+        power = np.repeat(base, patience)[:length];
+        return np.power(rate, power);
 
 def init_model(C1, C2, C3, C4):
     model = {};

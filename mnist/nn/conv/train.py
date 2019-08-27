@@ -30,7 +30,6 @@ warnings.filterwarnings("error")
 def main(epoch, rate, decay, continue_at, batch_size, channels):
     base_learning_rate = rate;
     decay_schedule = nn.decay_schedule(epoch, decay);
-    print(decay_schedule, len(decay_schedule))
     learning_rate = base_learning_rate * decay_schedule;
     if(continue_at != None and os.path.exists(continue_at)):
         model = data.load_model(continue_at);

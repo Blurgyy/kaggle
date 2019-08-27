@@ -25,7 +25,7 @@ def backward(model, dz):
     model['fc1'].backward(dz);
 
 def update(model, lr):
-    model['fc1'].update(lr);
+    model['fc1'].adam(lr);
 
 def main():
     epoch = 10000;

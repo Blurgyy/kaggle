@@ -34,12 +34,12 @@ def backward(model, dz):
     model['fc1'].backward(dz);
 
 def update(model, lr):
-    model['fc1'].update(lr);
-    model['fc2'].update(lr);
+    model['fc1'].adam(lr);
+    model['fc2'].adam(lr);
 
 def main():
     epoch = 10000;
-    lr = 1e-3;
+    lr = 1;
     batch_size = 64;
     model = fc_model(784, 1024, 10);
 

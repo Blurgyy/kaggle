@@ -3,7 +3,7 @@ __author__ = "Blurgy";
 import os 
 import pickle 
 import numpy as np 
-from PIL import Image 
+from scipy import ndimage 
 
 def shift(x):
     flag = np.random.randint(0,3);
@@ -18,21 +18,33 @@ def shift(x):
 
 def rotate(x, deg):
     ret = x.reshape(28,28);
-    img = Image.fromarray(ret.astype('uint8'));
-    rot = img.rotate(deg);
-    return np.asarray(rot).astype('int16');
+    ret = ndimage.rotate(ret.astype('uint8'), deg, reshape=False);
+    return ret.astype(x.dtype);
+
+def zoom(x, ratio):
+    ret = x.reshape(28,28);
+    ret = ndimage.zoom(ret.astype('uint8'), ratio);
+    if(ratio > 1):
+        ret = ret[1:-1, 1:-1];
+    else:
+        ret = np.pad(ret, ((1,1), (1,1)));
+    return ret.astype(x.dtype);
 
 def augment_training_set(train):
     ret = train.copy();
     for elem in train:
         label, img = elem;
         img = img.reshape(28, 28);
-        # (h/v) shift (1/2) grids (random)
+        # (h/v) shift (1/2) grids (random) 
         ret.append([label, shift(img).reshape(1,28,28)]);
         # rotate 10~15 degrees 
         deg = np.random.randint(10,16);
         deg *= 1 if np.random.randn() > 0 else -1;
         ret.append([label, rotate(img, deg).reshape(1,28,28)]);
+        # zoom +- 7% 
+        ratio = 0.07;
+        ratio *= 1 if np.random.randn() > 0 else -1;
+        ret.append([label, zoom(img, 1+ratio).reshape(1,28,28)]);
     return ret;
 
 def normalize_training_set(train):

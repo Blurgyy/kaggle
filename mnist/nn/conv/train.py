@@ -10,8 +10,9 @@ import time
 import plot 
 import click 
 
-import warnings
-warnings.filterwarnings("error")
+import warnings 
+warnings.filterwarnings('ignore', r'.*output shape of zoom.*')
+warnings.filterwarnings('error', r'.*divide by zero.*')
 
 @click.command()
 @click.option("--epoch", type = int, default = 20, 

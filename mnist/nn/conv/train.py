@@ -15,7 +15,7 @@ warnings.filterwarnings('ignore', r'.*output shape of zoom.*')
 warnings.filterwarnings('error', r'.*divide by zero.*')
 
 @click.command()
-@click.option("--epoch", type = int, default = 20, 
+@click.option("--epoch", type = int, default = 30, 
               help = "Specify number of epoches, 20 by default")
 @click.option("--rate", type = float, default = 1e-3, 
               help = "Specify value of initial learning rate, 1e-3 by default")

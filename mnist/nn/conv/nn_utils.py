@@ -65,7 +65,7 @@ def decay_schedule(length, decay):
     elif(decay == "constant"):
         return np.ones(length);
     elif(decay == "staircase"):
-        patience, rate = 4, 0.5;
+        patience, rate = 5, 0.5;
         base = np.arange(int(np.ceil(length/patience)));
         power = np.repeat(base, patience)[:length];
         return np.power(rate, power);

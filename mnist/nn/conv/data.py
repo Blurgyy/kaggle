@@ -71,6 +71,7 @@ def load_training_set():
             ret.append([label, imginfo]);
             if(len(ret) % 1000 == 0):
                 print("\rloading training set: %d" % (len(ret)), end = "");
+    print()
     return ret;
 
 def load_testing_set():
@@ -97,17 +98,17 @@ def preprocess_training_set():
     training_set = None;
     if(not os.path.exists(dmp_path)):
         training_set = load_training_set();
-        # augment
-        print("\naugmenting.. ", end="");
-        training_set = augment_training_set(training_set);
-        print("normalizing.. ", end="");
-        normalize_training_set(training_set);
-        print("complete, size %d\n" % (len(training_set)));
         with open(dmp_path, 'wb') as f:
             pickle.dump(training_set, f);
     else:
         with open(dmp_path, 'rb') as f:
             training_set = pickle.load(f);
+    # augment
+    print("augmenting.. ", end="");
+    training_set = augment_training_set(training_set);
+    print("normalizing.. ", end="");
+    normalize_training_set(training_set);
+    print("complete, size %d" % (len(training_set)));
     np.random.shuffle(training_set);
     return training_set;
 

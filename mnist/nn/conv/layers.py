@@ -357,7 +357,7 @@ class dropout_layer:
         self.p = p; # dropout ratio
     def forward(self, x, is_test_time, ):
         if(is_test_time):
-            self.mask = self.p;
+            self.mask = 1 - self.p;
         else:
             self.mask = (np.random.rand(*x.shape) > self.p);
         self.z = x * self.mask;

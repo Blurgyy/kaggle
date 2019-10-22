@@ -39,6 +39,7 @@ def main(epoch, rate, decay, continue_at, batch_size, channels):
 
     acc_curve = plot.plot();
     loss_curve = plot.plot();
+    global_stime = time.perf_counter();
     for ep in range(epoch):
         lr = learning_rate[ep];
         train = data.preprocess_training_set();
@@ -76,6 +77,8 @@ def main(epoch, rate, decay, continue_at, batch_size, channels):
         loss_curve.save("loss.png");
         print("model saved");
         print();
+    global_etime = time.perf_counter();
+    print(" time elapsed %.2f second(s)" % (global_etime - global_stime));
 
 if(__name__ == "__main__"):
     main();

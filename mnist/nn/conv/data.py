@@ -91,7 +91,7 @@ def load_testing_set():
     print("\ncomplete\n");
     return ret;
 
-def preprocess_training_set():
+def preprocess_training_set(aug = True):
     dmp_path = os.path.join("dmp", "train.pickle");
     if(not os.path.exists("dmp")):
         os.makedirs("dmp");
@@ -103,9 +103,10 @@ def preprocess_training_set():
     else:
         with open(dmp_path, 'rb') as f:
             training_set = pickle.load(f);
-    # augment
-    print("augmenting.. ", end="");
-    training_set = augment_training_set(training_set);
+    if(aug):
+        # augment
+        print("augmenting.. ", end="");
+        training_set = augment_training_set(training_set);
     print("normalizing.. ", end="");
     normalize_training_set(training_set);
     print("complete, size %d" % (len(training_set)));

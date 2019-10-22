@@ -10,7 +10,8 @@ import time
 import plot 
 
 import warnings
-warnings.filterwarnings("error")
+warnings.filterwarnings('ignore', r'.*output shape of zoom.*')
+warnings.filterwarnings('error', r'.*divide by zero.*')
 
 @click.command()
 @click.option("--epoch", type = int, default = 1000, 
@@ -29,7 +30,7 @@ def main(epoch, rate, continue_at, batch_size, channels):
         model = data.load_model(continue_at);
     else:
         model = nn.init_model(*channels);
-    train = data.preprocess_training_set()[0:train_size];
+    train = data.preprocess_training_set(aug = False)[0:train_size];
     loss_curve = plot.plot();
     acc_curve = plot.plot();
     for ep in range(epoch):
